@@ -25,7 +25,10 @@ jobs:
       - name: Install MkDocs Material
         run: pip install mkdocs-material mkdocs
       - name: Build site
-        run: mkdocs build --strict
+        run: |
+          # docs/assets 是相对软链，CI 上确保解析为实体目录
+          rm -rf docs/assets && cp -R assets docs/assets
+          mkdocs build --strict
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
