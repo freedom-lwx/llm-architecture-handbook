@@ -1,0 +1,15 @@
+# OS / 编辑器
+.DS_Store
+*.swp
+*~
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# 仓库本地文件
+.codegraph/
+.omo/
+.pi-subagents/
