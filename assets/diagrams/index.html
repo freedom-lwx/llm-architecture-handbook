@@ -1,0 +1,843 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0"><title>大模型架构结构图 · 六模型精细版</title><style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:#f1f5f9;color:#0f172a}
+header{background:#0f172a;color:#f8fafc;padding:18px 28px}
+header h1{font-size:20px} header p{color:#94a3b8;font-size:13px;margin-top:4px}
+nav{display:flex;flex-wrap:wrap;gap:8px;padding:12px 28px;background:#e2e8f0;position:sticky;top:0;z-index:10}
+.tab{padding:8px 14px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;cursor:pointer;font-size:13px;font-weight:600;color:#334155}
+.tab:hover{border-color:#6366f1} .tab.active{background:#6366f1;color:#fff;border-color:#6366f1}
+main{padding:20px 28px 60px} .model{display:none} .model.active{display:block}
+.model svg{width:100%;height:auto;background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(15,23,42,.12)}
+.controls{display:flex;gap:10px;align-items:center;margin-bottom:12px}
+.controls button{padding:6px 12px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;cursor:pointer;font-size:12.5px}
+.legend{background:#fff;border-radius:12px;margin-bottom:12px;box-shadow:0 1px 3px rgba(15,23,42,.08)} .legend svg{width:100%;height:auto}
+#compare{display:none} #compare.active{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px}
+.card{background:#fff;border-radius:12px;padding:14px;box-shadow:0 1px 3px rgba(15,23,42,.08)}
+.card-t{font-weight:700;font-size:15px;margin-bottom:8px} .card-m{font-weight:400;color:#64748b;font-size:12px;margin-left:6px}
+table.cmp{width:100%;border-collapse:collapse;font-size:12.5px}
+table.cmp td{padding:5px 6px;border-bottom:1px solid #f1f5f9;vertical-align:top}
+td.ck{color:#6366f1;font-weight:600;width:62px}
+footer{padding:20px 28px 40px;color:#64748b;font-size:12.5px}
+.note{background:#fef9c3;border-left:4px solid #ca8a04;padding:10px 14px;border-radius:0 8px 8px 0;font-size:12.5px;margin-bottom:12px}
+</style></head><body>
+<header><h1>大模型架构结构图 · 六模型精细版</h1>
+<p>统一 Decoder-only 主干 + 四替换件（位置编码/注意力/FFN·MoE/残差）｜证据: 官方 config + 源码审计（2026-08）｜悬停模块查看说明</p></header>
+<nav><button class="tab" data-t="unified">统一模板</button>
+<button class="tab" data-t="nanogpt">nanoGPT</button>
+<button class="tab" data-t="minimind">MiniMind</button>
+<button class="tab" data-t="qwen">Qwen3.6-27B</button>
+<button class="tab" data-t="glm">GLM-5.2</button>
+<button class="tab" data-t="kimi">Kimi-K3</button>
+<button class="tab" data-t="dsv4">DeepSeek-V4-Flash</button><button class="tab" data-t="compare">四替换件对比</button></nav><main>
+<div class="controls"><span style="font-size:13px;color:#334155">缩放:</span>
+<button id="zin">＋放大</button><button id="zout">－缩小</button><button id="zreset">复位</button></div>
+<div class="note">自包含 HTML：离线可用。彩色模块=四替换件；黄色=模型特有机制；右侧灰色卡=账本与证据。点击顶部标签切换。</div>
+<div class="legend"><svg width="1180" height="90" viewBox="0 0 1180 90" xmlns="http://www.w3.org/2000/svg">
+<rect x="0" y="0" width="1180" height="90" fill="#fff"/>
+<rect x="40" y="34" width="26" height="18" rx="4" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="80" y="50" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="13" fill="#334155" text-anchor="start" font-weight="400">输入/输出</text>
+<rect x="156" y="34" width="26" height="18" rx="4" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+<text x="196" y="50" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="13" fill="#334155" text-anchor="start" font-weight="400">Token嵌入</text>
+<rect x="300" y="34" width="26" height="18" rx="4" fill="#ffedd5" stroke="#f97316" stroke-width="1.5"/>
+<text x="340" y="50" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="13" fill="#334155" text-anchor="start" font-weight="400">位置编码</text>
+<rect x="402" y="34" width="26" height="18" rx="4" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="442" y="50" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="13" fill="#334155" text-anchor="start" font-weight="400">归一化/残差</text>
+<rect x="532" y="34" width="26" height="18" rx="4" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+<text x="572" y="50" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="13" fill="#334155" text-anchor="start" font-weight="400">注意力</text>
+<rect x="620" y="34" width="26" height="18" rx="4" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+<text x="660" y="50" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="13" fill="#334155" text-anchor="start" font-weight="400">FFN/MoE</text>
+<rect x="764" y="34" width="26" height="18" rx="4" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.5"/>
+<text x="804" y="50" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="13" fill="#334155" text-anchor="start" font-weight="400">特有机制</text>
+<rect x="866" y="34" width="26" height="18" rx="4" fill="#fee2e2" stroke="#ef4444" stroke-width="1.5"/>
+<text x="906" y="50" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="13" fill="#334155" text-anchor="start" font-weight="400">输出头</text>
+</svg></div>
+<section class="model" id="sec-unified">
+<svg width="1180" height="702" viewBox="0 0 1180 702" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif"><defs><marker id="ah" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#64748b"/></marker></defs><rect x="0" y="0" width="1180" height="702" fill="#fff"/><rect x="0" y="0" width="1180" height="44" fill="#0f172a"/><text x="24" y="29" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="17" fill="#f8fafc" font-weight="700">统一模板</text><text x="1156" y="29" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#94a3b8" text-anchor="end">所有模型共享的 Decoder-only 主干 + 四替换件</text><rect x="370" y="60" width="440" height="66" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="590" y="84" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">输入</text>
+<text x="590" y="110" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">input_ids (B,T)</text>
+<line x1="590" y1="126" x2="590" y2="144" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="370" y="144" width="440" height="66" rx="10" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+<text x="590" y="168" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">Token Embedding</text>
+<text x="590" y="194" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">embed_tokens（V→d）</text>
+<line x1="590" y1="210" x2="590" y2="228" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="370" y="228" width="440" height="66" rx="10" fill="#ffedd5" stroke="#f97316" stroke-width="1.5"/>
+<text x="590" y="252" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">位置编码（替换件①）</text>
+<text x="590" y="278" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">查表 wpe / RoPE / mrope 3D / NoPE / 双 RoPE</text>
+<line x1="590" y1="294" x2="590" y2="312" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="370" y="312" width="440" height="110" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="590" y="336" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">Decoder Stack ×L</text>
+<text x="590" y="340" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">Block=[Norm→注意力→+残差→Norm→FFN/MoE→+残差]</text>
+<text x="590" y="355" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">替换件②注意力: MHA/GQA/MLA/KDA/线性/稀疏/压缩</text>
+<text x="590" y="370" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">替换件③FFN: Dense/MoE/Latent MoE/FP4 MoE</text>
+<text x="590" y="385" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">替换件④残差: 单流/AttnRes/mHC(4流)</text>
+<line x1="590" y1="422" x2="590" y2="440" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="370" y="440" width="440" height="66" rx="10" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="590" y="464" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">Final Norm</text>
+<text x="590" y="490" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">RMSNorm / LayerNorm</text>
+<line x1="590" y1="506" x2="590" y2="524" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="370" y="524" width="440" height="66" rx="10" fill="#fee2e2" stroke="#ef4444" stroke-width="1.5"/>
+<text x="590" y="548" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">LM Head</text>
+<text x="590" y="574" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">hidden → V</text>
+<line x1="590" y1="590" x2="590" y2="608" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="370" y="608" width="440" height="66" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="590" y="632" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">输出</text>
+<text x="590" y="651" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">logits → CE(loss)/softmax→采样</text>
+<text x="590" y="665" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">可选: MTP/推测解码/视觉融合</text>
+<rect x="940" y="60" width="220" height="104" rx="10" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>><title>四个替换件</title>
+<text x="1050" y="84" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">四个替换件</text>
+<text x="1050" y="95" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">① 位置编码 ② 注意力</text>
+<text x="1050" y="110" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">③ FFN/MoE ④ 残差形态</text>
+<text x="1050" y="124" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">其余结构全部相同</text>
+<rect x="940" y="176" width="220" height="104" rx="10" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>><title>KV cache 形态</title>
+<text x="1050" y="200" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">KV cache 形态</text>
+<text x="1050" y="219" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">无/concat/paged</text>
+<text x="1050" y="233" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">低秩 MLA/定长状态/压缩条目</text>
+<rect x="940" y="292" width="220" height="104" rx="10" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>><title>规模化手段</title>
+<text x="1050" y="316" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">规模化手段</text>
+<text x="1050" y="327" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">MoE: 参数量与激活量解耦</text>
+<text x="1050" y="342" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">MLA: 缓存与头数解耦</text>
+<text x="1050" y="356" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">稀疏/压缩: 注意力与 T 解耦</text></svg>
+</section><section class="model" id="sec-nanogpt">
+<svg width="1180" height="1006" viewBox="0 0 1180 1006" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif"><defs><marker id="ah" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#64748b"/></marker></defs><rect x="0" y="0" width="1180" height="1006" fill="#fff"/><rect x="0" y="0" width="1180" height="44" fill="#0f172a"/><text x="24" y="29" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="17" fill="#f8fafc" font-weight="700">nanoGPT</text><text x="1156" y="29" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#94a3b8" text-anchor="end">最小 GPT · MHA + 可学习位置表 + 无 KV cache</text><rect x="370" y="60" width="440" height="66" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="590" y="84" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">输入</text>
+<text x="590" y="110" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">input_ids (B=12, T=1024) int64 词元 ID</text>
+<line x1="590" y1="126" x2="590" y2="144" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="370" y="144" width="440" height="66" rx="10" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+<text x="590" y="168" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">Token Embedding</text>
+<text x="590" y="194" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">wte (50304→768)｜参数 38.6M，与 lm_head 权重捆绑</text>
+<line x1="590" y1="210" x2="590" y2="228" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="370" y="228" width="440" height="66" rx="10" fill="#ffedd5" stroke="#f97316" stroke-width="1.5"/>
+<text x="590" y="252" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">位置编码（可学习查表）</text>
+<text x="590" y="278" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">wpe (1024→768) 可训练 786K 参数｜不可外推，超出 1024 直接 assert</text>
+<line x1="590" y1="294" x2="590" y2="312" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="260" y="312" width="680" height="414" rx="14" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="600" y="341" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="700">Decoder Stack — LayerNorm + Pre-Norm 残差 + MHA（无 KV cache）</text>
+<text x="300" y="375" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="14.5" fill="#0f172a" text-anchor="start" font-weight="700">Block ×12（每块相同）</text>
+<rect x="300" y="386" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="411" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">Pre-Norm</text>
+<rect x="462" y="386" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="411" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">ln_1 — LayerNorm（带 bias，eps 1e-5）</text>
+<rect x="300" y="438" width="150" height="72" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+<text x="375" y="478" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">注意力 MHA</text>
+<rect x="462" y="438" width="438" height="72" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="463" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">c_attn 一次投影 q/k/v (768→2304) → 12 头 × 64</text>
+<text x="681" y="478" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">flash SDPA(is_causal) 或手动: QKᵀ/√64 → 下三角 -inf → softmax → @V</text>
+<text x="681" y="493" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">无 KV cache —— generate 每步整段重算</text>
+<line x1="270" y1="428" x2="270" y2="438" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="520" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="545" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">＋残差</text>
+<rect x="462" y="520" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="545" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">x = x + attn(ln_1(x))</text>
+<line x1="270" y1="510" x2="270" y2="520" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="572" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="597" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">Post-Norm</text>
+<rect x="462" y="572" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="596" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">ln_2 — LayerNorm</text>
+<line x1="270" y1="562" x2="270" y2="572" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="623" width="150" height="42" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+<text x="375" y="648" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">FFN</text>
+<rect x="462" y="623" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="648" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">MLP: c_fc(768→3072) → GELU → c_proj(3072→768)｜4C 中间层</text>
+<line x1="270" y1="613" x2="270" y2="623" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="674" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="700" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">＋残差</text>
+<rect x="462" y="674" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="699" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">x = x + mlp(ln_2(x)) → 下一层</text>
+<line x1="270" y1="664" x2="270" y2="674" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<line x1="590" y1="726" x2="590" y2="744" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="370" y="744" width="440" height="66" rx="10" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="590" y="768" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">Final Norm</text>
+<text x="590" y="794" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">ln_f — LayerNorm (768)</text>
+<line x1="590" y1="810" x2="590" y2="828" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="370" y="828" width="440" height="66" rx="10" fill="#fee2e2" stroke="#ef4444" stroke-width="1.5"/>
+<text x="590" y="852" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">LM Head</text>
+<text x="590" y="878" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">lm_head (768→50304)｜weight tying: wte.weight = lm_head.weight</text>
+<line x1="590" y1="894" x2="590" y2="912" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="370" y="912" width="440" height="66" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="590" y="936" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">输出</text>
+<text x="590" y="961" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="8.0" fill="#334155" text-anchor="middle" font-weight="400">logits (B,T,50304) → CE(loss)｜推理只算最后位置 x[:,[-1],:] → 温度/top-k/softmax/multinomial</text>
+<rect x="940" y="60" width="220" height="92" rx="10" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>><title>参数量</title>
+<text x="1050" y="84" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">参数量</text>
+<text x="1050" y="95" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">N≈124M [推导]</text>
+<text x="1050" y="110" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">vocab 50304 对齐 64</text>
+<text x="1050" y="124" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">c_proj 初始化 ×1/√(2L)</text>
+<rect x="940" y="164" width="220" height="92" rx="10" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>><title>实测 [实验结果]</title>
+<text x="1050" y="188" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">实测 [实验结果]</text>
+<text x="1050" y="199" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">随机 loss ≈ ln V≈10.8</text>
+<text x="1050" y="214" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">500 iter: 10.84→6.13</text>
+<text x="1050" y="228" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">CPU MFU 0.16%</text>
+<rect x="940" y="268" width="220" height="92" rx="10" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>><title>训练</title>
+<text x="1050" y="292" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">训练</text>
+<text x="1050" y="303" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">CE + AdamW 分组 (2D 衰减)</text>
+<text x="1050" y="318" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">cosine LR + warmup</text>
+<text x="1050" y="332" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">DDP 最后 micro-step AllReduce</text></svg>
+</section><section class="model" id="sec-minimind">
+<svg width="1180" height="1052" viewBox="0 0 1180 1052" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif"><defs><marker id="ah" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#64748b"/></marker></defs><rect x="0" y="0" width="1180" height="1052" fill="#fff"/><rect x="0" y="0" width="1180" height="44" fill="#0f172a"/><text x="24" y="29" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="17" fill="#f8fafc" font-weight="700">MiniMind</text><text x="1156" y="29" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#94a3b8" text-anchor="end">现代组件最小集 · RoPE/GQA/KV cache/SwiGLU/可选 MoE</text><rect x="370" y="60" width="440" height="66" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="590" y="84" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">输入</text>
+<text x="590" y="110" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">input_ids (B,T)｜默认 8 层 / 768 维 / 6400 词表</text>
+<line x1="590" y1="126" x2="590" y2="144" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="370" y="144" width="440" height="66" rx="10" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+<text x="590" y="168" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">Token Embedding</text>
+<text x="590" y="194" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">embed_tokens (6400→768)｜默认 tie_word_embeddings=True</text>
+<line x1="590" y1="210" x2="590" y2="228" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="370" y="228" width="440" height="66" rx="10" fill="#ffedd5" stroke="#f97316" stroke-width="1.5"/>
+<text x="590" y="252" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">位置编码 RoPE</text>
+<text x="590" y="271" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">precompute_freqs_cis: θ=1e6, half-split, 可选 YaRN ×16</text>
+<text x="590" y="285" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">apply_rotary: rotate_half 旋转 q/k</text>
+<line x1="590" y1="294" x2="590" y2="312" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="260" y="312" width="680" height="460" rx="14" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="600" y="341" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="700">Decoder Stack — RMSNorm + GQA + KV cache + SwiGLU（可选 MoE）</text>
+<text x="300" y="375" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="14.5" fill="#0f172a" text-anchor="start" font-weight="700">Block ×8（每块相同）</text>
+<rect x="300" y="386" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="411" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">Pre-Norm</text>
+<rect x="462" y="386" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="411" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">input_layernorm — RMSNorm(768), fp32 累加</text>
+<rect x="300" y="438" width="150" height="104" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+<text x="375" y="494" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">注意力 GQA</text>
+<rect x="462" y="438" width="438" height="104" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="463" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">8 查询头 / 4 KV 头 (n_rep=2, repeat_kv 展开)</text>
+<text x="681" y="478" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">q/k 各 head-wise RMSNorm(96) → RoPE</text>
+<text x="681" y="493" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">KV cache: cat([past,new],dim=1) 追加</text>
+<text x="681" y="508" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">prefill→flash SDPA；decode→手动 scores</text>
+<text x="681" y="523" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">eq_proj/k_proj/v_proj 分离投影 (非三合一)</text>
+<line x1="270" y1="428" x2="270" y2="438" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="551" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="576" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">＋残差</text>
+<rect x="462" y="551" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="576" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">x = residual + attn</text>
+<line x1="270" y1="541" x2="270" y2="551" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="602" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="628" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">Post-Norm</text>
+<rect x="462" y="602" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="627" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">post_attention_layernorm — RMSNorm</text>
+<line x1="270" y1="592" x2="270" y2="602" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="654" width="150" height="57" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+<text x="375" y="687" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">FFN/MoE</text>
+<rect x="462" y="654" width="438" height="57" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="679" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">Dense: SwiGLU gate/up/down df≈2432 (≈πd)</text>
+<text x="681" y="694" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">或 MoE: 4 专家 top1, softmax 路由 + aux loss 5e-4</text>
+<line x1="270" y1="644" x2="270" y2="654" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="721" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="746" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">＋残差</text>
+<rect x="462" y="721" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="746" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">x = residual + mlp → 下一层</text>
+<line x1="270" y1="711" x2="270" y2="721" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<line x1="590" y1="772" x2="590" y2="790" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="370" y="790" width="440" height="66" rx="10" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="590" y="815" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">Final Norm</text>
+<text x="590" y="840" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">norm — RMSNorm(768)</text>
+<line x1="590" y1="856" x2="590" y2="874" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="370" y="874" width="440" height="66" rx="10" fill="#fee2e2" stroke="#ef4444" stroke-width="1.5"/>
+<text x="590" y="899" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">LM Head</text>
+<text x="590" y="924" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">lm_head (768→6400)</text>
+<line x1="590" y1="940" x2="590" y2="958" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="370" y="958" width="440" height="66" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="590" y="983" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">输出 + 自定义 generate</text>
+<text x="590" y="994" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">logits[:,-1]/T → repetition_penalty → top_k → top_p</text>
+<text x="590" y="1008" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">→ multinomial/argmax → EOS 跟踪 → streamer</text>
+<text x="590" y="1023" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">增量喂入 input_ids[:, past_len:]</text>
+<rect x="940" y="60" width="220" height="96" rx="10" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>><title>KV cache</title>
+<text x="1050" y="84" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">KV cache</text>
+<text x="1050" y="95" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">每层 (B,T,4,96)</text>
+<text x="1050" y="110" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">≈2·T·4·96·2B=1.5KB/token</text>
+<text x="1050" y="124" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">无cache==有cache 已实测 [实验结果]</text>
+<rect x="940" y="168" width="220" height="96" rx="10" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>><title>唯一开源训练</title>
+<text x="1050" y="192" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">唯一开源训练</text>
+<text x="1050" y="203" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">pretrain / FullSFT / LoRA</text>
+<text x="1050" y="218" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">DPO / PPO / GRPO</text>
+<text x="1050" y="232" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">(本地 Torch 或 SGLang rollout)</text>
+<rect x="940" y="276" width="220" height="96" rx="10" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>><title>工程</title>
+<text x="1050" y="300" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">工程</text>
+<text x="1050" y="311" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">DDP + DistributedSampler</text>
+<text x="1050" y="326" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">.pth ↔ safetensors</text>
+<text x="1050" y="340" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">Flask OpenAI 兼容 API + stream</text></svg>
+</section><section class="model" id="sec-qwen">
+<svg width="1180" height="1552" viewBox="0 0 1180 1552" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif"><defs><marker id="ah" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#64748b"/></marker></defs><rect x="0" y="0" width="1180" height="1552" fill="#fff"/><rect x="0" y="0" width="1180" height="44" fill="#0f172a"/><text x="24" y="29" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="17" fill="#f8fafc" font-weight="700">Qwen3.6-27B</text><text x="1156" y="29" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#94a3b8" text-anchor="end">Dense-Hybrid · 48 GatedDeltaNet + 16 Full Attention</text><rect x="370" y="60" width="440" height="66" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="590" y="84" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">输入</text>
+<text x="590" y="110" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">input_ids (B,T)｜64 层 / 5120 维 / 248320 词表</text>
+<line x1="590" y1="126" x2="590" y2="144" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="370" y="144" width="440" height="66" rx="10" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+<text x="590" y="168" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">Token Embedding</text>
+<text x="590" y="194" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">embed_tokens (248320→5120) tie=false</text>
+<line x1="590" y1="210" x2="590" y2="228" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="370" y="228" width="440" height="66" rx="10" fill="#ffedd5" stroke="#f97316" stroke-width="1.5"/>
+<text x="590" y="252" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">位置编码 mrope（3D 旋转）</text>
+<text x="590" y="271" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">θ=1e7, partial_rotary=0.25 (只旋前 64 维)</text>
+<text x="590" y="285" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">mrope_section=[11,11,10] 携带 T/H/W 视觉位置</text>
+<line x1="590" y1="294" x2="590" y2="312" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<text x="300" y="363" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="13" fill="#334155" text-anchor="start" font-weight="600">layer_types: 48 linear_attention + 16 full_attention（每 4 层 1 个，interval=4）</text>
+<rect x="320" y="382" width="33" height="26" rx="13" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.2"/>
+<text x="336" y="399" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="600">L</text>
+<rect x="359" y="382" width="33" height="26" rx="13" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.2"/>
+<text x="376" y="399" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="600">L</text>
+<rect x="398" y="382" width="33" height="26" rx="13" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.2"/>
+<text x="414" y="399" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="600">L</text>
+<rect x="437" y="382" width="33" height="26" rx="13" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.2"/>
+<text x="454" y="399" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="600">F</text>
+<text x="482" y="400" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12" fill="#64748b" text-anchor="start" font-weight="400">× 16 组 → 48 线性 + 16 全注意力</text>
+<text x="300" y="443" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="14.5" fill="#0f172a" text-anchor="start" font-weight="700">Block 0（linear_attention）</text>
+<rect x="300" y="454" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="479" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">Pre-Norm</text>
+<rect x="462" y="454" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="479" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">input_layernorm — RMSNorm(5120)</text>
+<rect x="300" y="506" width="150" height="134" rx="8" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.5"/>
+<text x="375" y="577" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">注意力（线性）</text>
+<rect x="462" y="506" width="438" height="134" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="532" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">Qwen3_5GatedDeltaNet — delta-rule 线性注意力</text>
+<text x="681" y="547" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">in_proj_qkv(5120→10240) Q/K 16头×128, V 48头×128</text>
+<text x="681" y="562" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">in_proj_z (输出门) / in_proj_b (β) / in_proj_a (衰减)</text>
+<text x="681" y="577" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">short conv1d kernel=4 depthwise SiLU; 状态 S (48,128,128)</text>
+<text x="681" y="592" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">S=αS+β(k⊗v − k(kᵀS)) [delta rule]; α=-exp(A_log)·softplus(a+dt)</text>
+<text x="681" y="607" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">q/k L2 归一化; 输出 RMSNormGated×swish(z)</text>
+<text x="681" y="622" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">O(T) 推理: conv_state 定长4 + recurrent_state 定长, 无 KV 增长</text>
+<line x1="270" y1="496" x2="270" y2="506" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="650" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="675" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">＋残差</text>
+<rect x="462" y="650" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="675" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">x = x + linear_attn(...)</text>
+<line x1="270" y1="640" x2="270" y2="650" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="702" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="727" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">Post-Norm</text>
+<rect x="462" y="702" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="726" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">post_attention_layernorm</text>
+<line x1="270" y1="692" x2="270" y2="702" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="753" width="150" height="42" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+<text x="375" y="778" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">FFN</text>
+<rect x="462" y="753" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="778" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">SwiGLU gate/up/down df=17408 (3×5120×17408≈267M/层)</text>
+<line x1="270" y1="743" x2="270" y2="753" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="804" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="830" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">＋残差</text>
+<rect x="462" y="804" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="829" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">x = x + mlp(...) → 下一层</text>
+<line x1="270" y1="794" x2="270" y2="804" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<text x="300" y="875" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="14.5" fill="#0f172a" text-anchor="start" font-weight="700">Block 3（full_attention，每 4 层一个）</text>
+<rect x="300" y="886" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="911" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">Pre-Norm</text>
+<rect x="462" y="886" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="911" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">input_layernorm — RMSNorm(5120)</text>
+<rect x="300" y="938" width="150" height="119" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+<text x="375" y="1002" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">注意力（全）</text>
+<rect x="462" y="938" width="438" height="119" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="964" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">Qwen3_5Attention GQA 24头/4KV, head_dim=256</text>
+<text x="681" y="979" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">q_proj 双倍宽 5120→12288 切半→gate; k/v→4×256</text>
+<text x="681" y="994" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">q/k 各自 RMSNorm(256) (零初始化 (1+w) 变体)</text>
+<text x="681" y="1009" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">partial RoPE: 只旋转前 64 维; repeat_interleave ×6</text>
+<text x="681" y="1024" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">o = attn × sigmoid(gate) 输出门 → o_proj</text>
+<text x="681" y="1039" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">KV cache: 2·T·4·256·2B=4KB/token/层</text>
+<line x1="270" y1="928" x2="270" y2="938" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="1066" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="1092" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">＋残差</text>
+<rect x="462" y="1066" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="1091" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">x = x + self_attn(...)</text>
+<line x1="270" y1="1056" x2="270" y2="1066" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="1118" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="1143" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">Post-Norm</text>
+<rect x="462" y="1118" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="1143" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">post_attention_layernorm</text>
+<line x1="270" y1="1108" x2="270" y2="1118" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="1170" width="150" height="42" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+<text x="375" y="1195" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">FFN</text>
+<rect x="462" y="1170" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="1194" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">SwiGLU df=17408</text>
+<line x1="270" y1="1160" x2="270" y2="1170" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="1221" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="1246" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">＋残差</text>
+<rect x="462" y="1221" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="1246" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">x = x + mlp(...) → 下一层</text>
+<line x1="270" y1="1211" x2="270" y2="1221" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="260" y="312" width="680" height="960" rx="14" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="600" y="341" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="700">Decoder Stack — 48×GatedDeltaNet + 16×Full Attention（Dense Hybrid）</text>
+<line x1="590" y1="1272" x2="590" y2="1290" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="370" y="1290" width="440" height="66" rx="10" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="590" y="1315" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">Final Norm</text>
+<text x="590" y="1340" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">final RMSNorm(5120)</text>
+<line x1="590" y1="1356" x2="590" y2="1374" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="370" y="1374" width="440" height="66" rx="10" fill="#fee2e2" stroke="#ef4444" stroke-width="1.5"/>
+<text x="590" y="1399" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">LM Head</text>
+<text x="590" y="1424" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">lm_head (5120→248320)</text>
+<line x1="590" y1="1440" x2="590" y2="1458" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="370" y="1458" width="440" height="66" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="590" y="1483" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">输出 + MTP</text>
+<text x="590" y="1494" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">logits→采样</text>
+<text x="590" y="1508" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">MTP×1 (mtp_num_hidden_layers=1, ^mtp.* 权重被忽略)</text>
+<text x="590" y="1523" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">vLLM: qwen3_next_mtp / SGLang: NEXTN</text>
+<rect x="940" y="60" width="220" height="100" rx="10" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>><title>混合收益</title>
+<text x="1050" y="84" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">混合收益</text>
+<text x="1050" y="95" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">线性层 O(T) 定长状态=长程记忆</text>
+<text x="1050" y="110" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">全注意力=精确检索</text>
+<text x="1050" y="124" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">262K→1M 的物理基础</text>
+<rect x="940" y="172" width="220" height="100" rx="10" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>><title>视觉</title>
+<text x="1050" y="196" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">视觉</text>
+<text x="1050" y="200" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">Conv3d(2×16×16) 时空 patch</text>
+<text x="1050" y="215" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">→27 层 ViT→2×2 PatchMerger→5120</text>
+<text x="1050" y="229" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">image placeholder masked_scatter</text>
+<text x="1050" y="244" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">mrope 3D 位置贯穿</text>
+<rect x="940" y="284" width="220" height="100" rx="10" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>><title>参数量</title>
+<text x="1050" y="308" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">参数量</text>
+<text x="1050" y="319" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">≈27B [推导] 与官方一致</text>
+<text x="1050" y="334" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">Dense: FFN 占 63%</text>
+<text x="1050" y="348" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">激活=总参 (非 MoE)</text>
+<rect x="940" y="396" width="220" height="100" rx="10" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>><title>MTP</title>
+<text x="1050" y="420" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">MTP</text>
+<text x="1050" y="431" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">mtp_num_hidden_layers=1 [配置值]</text>
+<text x="1050" y="446" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">^mtp.* 键被加载器忽略</text>
+<text x="1050" y="460" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">推理由引擎实现</text></svg>
+</section><section class="model" id="sec-glm">
+<svg width="1180" height="1650" viewBox="0 0 1180 1650" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif"><defs><marker id="ah" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#64748b"/></marker></defs><rect x="0" y="0" width="1180" height="1650" fill="#fff"/><rect x="0" y="0" width="1180" height="44" fill="#0f172a"/><text x="24" y="29" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="17" fill="#f8fafc" font-weight="700">GLM-5.2</text><text x="1156" y="29" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#94a3b8" text-anchor="end">78×MLA + DSA/IndexShare + 75×MoE · 1M ctx</text><rect x="370" y="60" width="440" height="66" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="590" y="84" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">输入</text>
+<text x="590" y="110" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">input_ids (B,T)｜78 层 / 6144 维 / 154880 词表</text>
+<line x1="590" y1="126" x2="590" y2="144" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="370" y="144" width="440" height="66" rx="10" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+<text x="590" y="168" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">Token Embedding</text>
+<text x="590" y="194" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">embed_tokens (154880→6144) tie=false</text>
+<line x1="590" y1="210" x2="590" y2="228" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="370" y="228" width="440" height="66" rx="10" fill="#ffedd5" stroke="#f97316" stroke-width="1.5"/>
+<text x="590" y="252" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">位置编码 RoPE（interleave）</text>
+<text x="590" y="271" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">θ=8,000,000，32 频率，逐 token 实时计算</text>
+<text x="590" y="285" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">最低频波长 ≈ 5×10⁷ ≫ 1M，head_dim 被钉在 64</text>
+<line x1="590" y1="294" x2="590" y2="312" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<text x="300" y="363" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="13" fill="#334155" text-anchor="start" font-weight="600">mlp_layer_types: 前 3 层 dense + 后 75 层 MoE｜indexer: full/shared 每 4 层（IndexShare）</text>
+<rect x="320" y="382" width="32" height="26" rx="13" fill="#dcfce7" stroke="#22c55e" stroke-width="1.2"/>
+<text x="336" y="399" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="10" fill="#334155" text-anchor="middle" font-weight="600">D</text>
+<rect x="357" y="382" width="32" height="26" rx="13" fill="#dcfce7" stroke="#22c55e" stroke-width="1.2"/>
+<text x="373" y="399" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="10" fill="#334155" text-anchor="middle" font-weight="600">D</text>
+<rect x="394" y="382" width="32" height="26" rx="13" fill="#dcfce7" stroke="#22c55e" stroke-width="1.2"/>
+<text x="410" y="399" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="10" fill="#334155" text-anchor="middle" font-weight="600">D</text>
+<rect x="431" y="382" width="56" height="26" rx="13" fill="#dcfce7" stroke="#22c55e" stroke-width="1.2"/>
+<text x="459" y="399" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="10" fill="#334155" text-anchor="middle" font-weight="600">MoE</text>
+<rect x="492" y="382" width="56" height="26" rx="13" fill="#dcfce7" stroke="#22c55e" stroke-width="1.2"/>
+<text x="520" y="399" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="10" fill="#334155" text-anchor="middle" font-weight="600">MoE</text>
+<rect x="553" y="382" width="56" height="26" rx="13" fill="#dcfce7" stroke="#22c55e" stroke-width="1.2"/>
+<text x="581" y="399" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="10" fill="#334155" text-anchor="middle" font-weight="600">MoE</text>
+<rect x="614" y="382" width="56" height="26" rx="13" fill="#dcfce7" stroke="#22c55e" stroke-width="1.2"/>
+<text x="642" y="399" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="10" fill="#334155" text-anchor="middle" font-weight="600">MoE</text>
+<rect x="675" y="382" width="56" height="26" rx="13" fill="#dcfce7" stroke="#22c55e" stroke-width="1.2"/>
+<text x="703" y="399" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="10" fill="#334155" text-anchor="middle" font-weight="600">MoE</text>
+<rect x="736" y="382" width="56" height="26" rx="13" fill="#dcfce7" stroke="#22c55e" stroke-width="1.2"/>
+<text x="764" y="399" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="10" fill="#334155" text-anchor="middle" font-weight="600">MoE</text>
+<text x="803" y="400" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12" fill="#64748b" text-anchor="start" font-weight="400">… 共 75 层 MoE</text>
+<text x="300" y="443" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="14.5" fill="#0f172a" text-anchor="start" font-weight="700">Block 0（Dense MLP · indexer=full）</text>
+<rect x="300" y="454" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="479" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">Pre-Norm</text>
+<rect x="462" y="454" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="479" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">input_layernorm — RMSNorm(6144)</text>
+<rect x="300" y="506" width="150" height="88" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+<text x="375" y="554" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">注意力 MLA</text>
+<rect x="462" y="506" width="438" height="88" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="533" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="10.0" fill="#334155" text-anchor="middle" font-weight="400">q: q_a(6144→2048)→q_a_layernorm→q_b(2048→64×256)</text>
+<text x="681" y="546" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="10.0" fill="#334155" text-anchor="middle" font-weight="400">kv: kv_a_proj_with_mqa(6144→576=512+64)→kv_a_layernorm→kv_b(512→64×448)</text>
+<text x="681" y="560" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="10.0" fill="#334155" text-anchor="middle" font-weight="400">拆 k_pass(192)+v(256); rope 仅 64 维, 单头 expand 共享 64 头</text>
+<text x="681" y="573" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="10.0" fill="#334155" text-anchor="middle" font-weight="400">scaling 256^-0.5; cache (512+64)×2B=1152B/token/层</text>
+<line x1="270" y1="496" x2="270" y2="506" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="604" width="150" height="104" rx="8" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.5"/>
+<text x="375" y="660" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">稀疏化 Indexer</text>
+<rect x="462" y="604" width="438" height="104" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="629" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">GlmMoeDsaIndexer (本层 full):</text>
+<text x="681" y="644" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">wq_b(2048→32×128)+wk(6144→128)+k_norm(LN)+weights_proj(6144→32)</text>
+<text x="681" y="659" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">打分 ReLU(q·k)·128^-0.5 → weights_proj 头加权 → 因果掩码 → topk=2048</text>
+<text x="681" y="674" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">eager: scatter 稀疏掩码; flash_mla: 直接消费 indices</text>
+<text x="681" y="689" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">indexer key cache 仅 full 层维护 (128 维单头)</text>
+<line x1="270" y1="594" x2="270" y2="604" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="717" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="742" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">＋残差</text>
+<rect x="462" y="717" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="742" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">x = x + attn(...)</text>
+<line x1="270" y1="707" x2="270" y2="717" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="768" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="794" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">Post-Norm</text>
+<rect x="462" y="768" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="793" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">post_attention_layernorm</text>
+<line x1="270" y1="758" x2="270" y2="768" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="820" width="150" height="42" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+<text x="375" y="845" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">FFN Dense</text>
+<rect x="462" y="820" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="845" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">SwiGLU df=12288｜仅前 3 层 (first_k_dense_replace=3)</text>
+<line x1="270" y1="810" x2="270" y2="820" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="872" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="897" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">＋残差</text>
+<rect x="462" y="872" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="896" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">x = x + mlp(...) → 下一层</text>
+<line x1="270" y1="862" x2="270" y2="872" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<text x="300" y="942" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="14.5" fill="#0f172a" text-anchor="start" font-weight="700">Block 4（MoE · indexer=shared）</text>
+<rect x="300" y="953" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="978" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">Pre-Norm</text>
+<rect x="462" y="953" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="978" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">input_layernorm — RMSNorm(6144)</text>
+<rect x="300" y="1004" width="150" height="72" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+<text x="375" y="1045" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">注意力 MLA</text>
+<rect x="462" y="1004" width="438" height="72" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="1030" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">MLA 同左｜indexer=None (本层 shared)</text>
+<text x="681" y="1045" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">topk_indices = prev_topk_indices (复用上层 full 的 topk=2048)</text>
+<text x="681" y="1060" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">IndexShare: 每 4 层共享, 1M 下 FLOPs ↓2.9× [官方材料]</text>
+<line x1="270" y1="994" x2="270" y2="1004" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="1087" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="1112" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">＋残差</text>
+<rect x="462" y="1087" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="1112" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">x = x + attn(...)</text>
+<line x1="270" y1="1077" x2="270" y2="1087" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="1138" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="1164" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">Post-Norm</text>
+<rect x="462" y="1138" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="1163" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">post_attention_layernorm</text>
+<line x1="270" y1="1128" x2="270" y2="1138" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="1190" width="150" height="119" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+<text x="375" y="1254" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">MoE</text>
+<rect x="462" y="1190" width="438" height="119" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="1216" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">GlmMoeDsaTopkRouter: sigmoid 打分 → top8/256</text>
+<text x="681" y="1231" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">(n_group=1 退化为全局 top-8)</text>
+<text x="681" y="1246" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">norm_topk_prob ÷(Σ+1e-20) × routed_scaling=2.5</text>
+<text x="681" y="1261" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">noaux_tc (e_score_correction_bias 当前恒零)</text>
+<text x="681" y="1276" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">专家: 256×[gate_up(4096,6144)+down] 打包, 每专家 37.7M</text>
+<text x="681" y="1291" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">每层 9.66B + 1 共享专家</text>
+<line x1="270" y1="1180" x2="270" y2="1190" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="1319" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="1344" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">＋残差</text>
+<rect x="462" y="1319" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="1344" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">x = x + mlp(...) → 下一层</text>
+<line x1="270" y1="1309" x2="270" y2="1319" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="260" y="312" width="680" height="1058" rx="14" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="600" y="341" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="700">Decoder Stack — 78×MLA + DSA/IndexShare + 75×MoE（1M ctx）</text>
+<line x1="590" y1="1370" x2="590" y2="1388" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="370" y="1388" width="440" height="66" rx="10" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="590" y="1413" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">Final Norm</text>
+<text x="590" y="1438" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">RMSNorm(6144)</text>
+<line x1="590" y1="1454" x2="590" y2="1472" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="370" y="1472" width="440" height="66" rx="10" fill="#fee2e2" stroke="#ef4444" stroke-width="1.5"/>
+<text x="590" y="1497" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">LM Head</text>
+<text x="590" y="1522" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">lm_head (6144→154880)</text>
+<line x1="590" y1="1538" x2="590" y2="1556" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="370" y="1556" width="440" height="66" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="590" y="1581" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">输出 + MTP</text>
+<text x="590" y="1592" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">logits→采样</text>
+<text x="590" y="1606" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">MTP 权重藏 model.layers.78 (791 键, eh_proj/enorm/hnorm)</text>
+<text x="590" y="1621" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">transformers 加载忽略; 引擎推测解码 (接受+20% [官方材料])</text>
+<rect x="940" y="60" width="220" height="104" rx="10" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>><title>规模</title>
+<text x="1050" y="84" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">规模</text>
+<text x="1050" y="95" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">≈740B 总参 / ≈35B 激活 [推导]</text>
+<text x="1050" y="110" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">75 层×256 专家×37.7M</text>
+<text x="1050" y="124" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">权重 283 分片 safetensors</text>
+<rect x="940" y="176" width="220" height="104" rx="10" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>><title>1M 账本</title>
+<text x="1050" y="200" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">1M 账本</text>
+<text x="1050" y="211" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">MLA 缓存 78×1152B×1M≈90GB</text>
+<text x="1050" y="226" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">(DSA 省算力不省缓存)</text>
+<text x="1050" y="240" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">注意力 24.6GFLOP→50MFLOP</text>
+<rect x="940" y="292" width="220" height="104" rx="10" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>><title>MTP</title>
+<text x="1050" y="316" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">MTP</text>
+<text x="1050" y="327" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">num_nextn_predict_layers=1</text>
+<text x="1050" y="342" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">接受长度 +20% [官方材料]</text>
+<text x="1050" y="356" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">index_share_for_mtp_iteration</text>
+<rect x="940" y="408" width="220" height="104" rx="10" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>><title>路由</title>
+<text x="1050" y="432" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">路由</text>
+<text x="1050" y="445" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="9.0" fill="#334155" text-anchor="middle" font-weight="400">sigmoid + e_score_correction_bias(恒零)</text>
+<text x="1050" y="457" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="9.0" fill="#334155" text-anchor="middle" font-weight="400">noaux_tc 键存在但不读</text>
+<text x="1050" y="470" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="9.0" fill="#334155" text-anchor="middle" font-weight="400">moe_router_dtype=float32</text></svg>
+</section><section class="model" id="sec-kimi">
+<svg width="1180" height="1614" viewBox="0 0 1180 1614" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif"><defs><marker id="ah" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#64748b"/></marker></defs><rect x="0" y="0" width="1180" height="1614" fill="#fff"/><rect x="0" y="0" width="1180" height="44" fill="#0f172a"/><text x="24" y="29" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="17" fill="#f8fafc" font-weight="700">Kimi-K3</text><text x="1156" y="29" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#94a3b8" text-anchor="end">69 KDA + 24 Gated MLA + AttnRes + Latent MoE · 2.8T</text><rect x="370" y="60" width="440" height="66" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="590" y="84" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">输入</text>
+<text x="590" y="110" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">input_ids (B,T)｜93 层 / 7168 维 / 163840 词表</text>
+<line x1="590" y1="126" x2="590" y2="144" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="370" y="144" width="440" height="66" rx="10" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+<text x="590" y="168" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">Token Embedding</text>
+<text x="590" y="194" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">embed_tokens (163840→7168)</text>
+<line x1="590" y1="210" x2="590" y2="228" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="370" y="228" width="440" height="66" rx="10" fill="#ffedd5" stroke="#f97316" stroke-width="1.5"/>
+<text x="590" y="252" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">位置编码：无（NoPE）</text>
+<text x="590" y="271" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">没有任何位置编码！MLA 层 rotary_emb=None [源码事实]</text>
+<text x="590" y="285" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">位置由 KDA 递推状态 + 短卷积因果性携带</text>
+<line x1="590" y1="294" x2="590" y2="312" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<text x="300" y="363" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="13" fill="#334155" text-anchor="start" font-weight="600">层 0=Dense MLP；层 1..92=Latent MoE｜注意力: 69 KDA + 24 Gated MLA</text>
+<rect x="320" y="382" width="32" height="26" rx="13" fill="#dcfce7" stroke="#22c55e" stroke-width="1.2"/>
+<text x="336" y="399" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="10.5" fill="#334155" text-anchor="middle" font-weight="600">D</text>
+<rect x="358" y="382" width="58" height="26" rx="13" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.2"/>
+<text x="386" y="399" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="10.5" fill="#334155" text-anchor="middle" font-weight="600">KDA</text>
+<rect x="420" y="382" width="58" height="26" rx="13" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.2"/>
+<text x="449" y="399" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="10.5" fill="#334155" text-anchor="middle" font-weight="600">KDA</text>
+<rect x="482" y="382" width="58" height="26" rx="13" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.2"/>
+<text x="511" y="399" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="10.5" fill="#334155" text-anchor="middle" font-weight="600">KDA</text>
+<rect x="545" y="382" width="58" height="26" rx="13" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.2"/>
+<text x="574" y="399" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="10.5" fill="#334155" text-anchor="middle" font-weight="600">MLA</text>
+<rect x="608" y="382" width="58" height="26" rx="13" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.2"/>
+<text x="636" y="399" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="10.5" fill="#334155" text-anchor="middle" font-weight="600">KDA</text>
+<rect x="670" y="382" width="58" height="26" rx="13" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.2"/>
+<text x="699" y="399" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="10.5" fill="#334155" text-anchor="middle" font-weight="600">KDA</text>
+<rect x="732" y="382" width="58" height="26" rx="13" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.2"/>
+<text x="761" y="399" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="10.5" fill="#334155" text-anchor="middle" font-weight="600">KDA</text>
+<rect x="795" y="382" width="58" height="26" rx="13" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.2"/>
+<text x="824" y="399" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="10.5" fill="#334155" text-anchor="middle" font-weight="600">MLA</text>
+<text x="864" y="400" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12" fill="#64748b" text-anchor="start" font-weight="400">… 93 层</text>
+<text x="300" y="443" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="14.5" fill="#0f172a" text-anchor="start" font-weight="700">Block 1（KDA · Kimi Delta Attention）</text>
+<rect x="300" y="454" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="479" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">Pre-Norm</text>
+<rect x="462" y="454" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="479" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">input_layernorm — RMSNorm(7168)</text>
+<rect x="300" y="506" width="150" height="150" rx="8" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.5"/>
+<text x="375" y="585" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">注意力 KDA</text>
+<rect x="462" y="506" width="438" height="150" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="532" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">KimiDeltaAttention — delta-rule 状态机</text>
+<text x="681" y="547" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">q/k/v_proj(7168→12288) → ShortConv kernel=4 SiLU</text>
+<text x="681" y="562" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">状态 S (B,96,128,128): S=αS+β(k⊗v−k(kᵀS))</text>
+<text x="681" y="577" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">α=exp(g), g=gmin·σ(e^{A_log}·z), gmin=−5(下界)</text>
+<text x="681" y="592" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">z=f_b(f_a(x))+dt_bias (低秩 decay logit); β=σ(Wβ x)</text>
+<text x="681" y="607" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">q/k L2 归一化; 训练=chunk_kda/推理=fused_recurrent_kda(fla-core)</text>
+<text x="681" y="622" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">输出门: RMSNormGated(o,σ(g)) → o_proj</text>
+<text x="681" y="637" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">cache: conv_states(定长4)+recurrent_states 定长, O(T)</text>
+<line x1="270" y1="496" x2="270" y2="506" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="666" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="691" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">＋残差</text>
+<rect x="462" y="666" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="690" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">x = x + attn(...)</text>
+<line x1="270" y1="656" x2="270" y2="666" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="717" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="742" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">Post-Norm</text>
+<rect x="462" y="717" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="742" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">post_attention_layernorm</text>
+<line x1="270" y1="707" x2="270" y2="717" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="768" width="150" height="104" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+<text x="375" y="825" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">Latent MoE</text>
+<rect x="462" y="768" width="438" height="104" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="794" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">896 专家 top16 + 2 共享</text>
+<text x="681" y="809" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">latent 投影 7168→3584(0.5×)→RMSNorm</text>
+<text x="681" y="824" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">每专家 BlockSparseMLP: 3×3584×3072=33M (SITU 激活 β1=4,β2=25)</text>
+<text x="681" y="839" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">sigmoid + e_score_correction_bias; moe_renormalize×1.0</text>
+<text x="681" y="854" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">发布代码仅推理 (训练抛 NotImplementedError)</text>
+<line x1="270" y1="758" x2="270" y2="768" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="882" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="907" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">＋残差</text>
+<rect x="462" y="882" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="907" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">x = x + mlp(...) → 下一层</text>
+<line x1="270" y1="872" x2="270" y2="882" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<text x="300" y="953" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="14.5" fill="#0f172a" text-anchor="start" font-weight="700">Block 4（Gated MLA）</text>
+<rect x="300" y="964" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="989" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">Pre-Norm</text>
+<rect x="462" y="964" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="988" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">input_layernorm — RMSNorm(7168)</text>
+<rect x="300" y="1015" width="150" height="104" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+<text x="375" y="1071" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">注意力 Gated MLA</text>
+<rect x="462" y="1015" width="438" height="104" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="1041" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">q: q_a(7168→1536)→q_a_layernorm→q_b(1536→96×192)</text>
+<text x="681" y="1056" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">kv: kv_a(7168→576=512+64)→kv_b(512→96×256)</text>
+<text x="681" y="1071" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">拆 k_pass(128)+v(128); k_rot(64) expand 96 头; NoPE 不旋转</text>
+<text x="681" y="1086" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">mla_use_output_gate: attn × sigmoid(g_proj x) → o_proj</text>
+<text x="681" y="1101" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">cache 576×2B=1152B/token (进 KimiDynamicCache)</text>
+<line x1="270" y1="1005" x2="270" y2="1015" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="1128" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="1154" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">＋残差</text>
+<rect x="462" y="1128" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="1153" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">x = x + attn(...)</text>
+<line x1="270" y1="1118" x2="270" y2="1128" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="1180" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="1205" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">Post-Norm</text>
+<rect x="462" y="1180" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="1205" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">post_attention_layernorm</text>
+<line x1="270" y1="1170" x2="270" y2="1180" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="1232" width="150" height="42" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+<text x="375" y="1257" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">Latent MoE</text>
+<rect x="462" y="1232" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="1256" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">同上 (896 top16, latent 3584, SITU)</text>
+<line x1="270" y1="1222" x2="270" y2="1232" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="1283" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="1308" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">＋残差</text>
+<rect x="462" y="1283" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="1308" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">x = x + mlp(...) → 下一层</text>
+<line x1="270" y1="1273" x2="270" y2="1283" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="260" y="312" width="680" height="1022" rx="14" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="600" y="341" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="700">Decoder Stack — AttnRes(12层一块) + 69 KDA + 24 Gated MLA + Latent MoE</text>
+<line x1="590" y1="1334" x2="590" y2="1352" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="370" y="1352" width="440" height="66" rx="10" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="590" y="1377" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">Final Norm + AttnRes 聚合</text>
+<text x="590" y="1402" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">RMSNorm + 输出层聚合全部块表示 (_apply_output_attn_res)</text>
+<line x1="590" y1="1418" x2="590" y2="1436" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="370" y="1436" width="440" height="66" rx="10" fill="#fee2e2" stroke="#ef4444" stroke-width="1.5"/>
+<text x="590" y="1461" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">LM Head</text>
+<text x="590" y="1486" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">lm_head (7168→163840)</text>
+<line x1="590" y1="1502" x2="590" y2="1520" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="370" y="1520" width="440" height="66" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="590" y="1545" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">输出 + 视觉</text>
+<text x="590" y="1556" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">logits→采样</text>
+<text x="590" y="1570" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">视觉 MoonViT-V2(patch14,27层,12头,401M)→tpool→PatchMerger(4096→7168)</text>
+<text x="590" y="1585" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">image placeholder(163605) LLaVA 式替换; encoding_k3 编码图文</text>
+<rect x="940" y="60" width="220" height="108" rx="10" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>><title>规模 [官方材料]</title>
+<text x="1050" y="84" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">规模 [官方材料]</text>
+<text x="1050" y="88" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">2.8T 总参 / 104B 激活</text>
+<text x="1050" y="103" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">896 专家/16 激活/2 共享</text>
+<text x="1050" y="117" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">Latent 3584 是账本钥匙</text>
+<text x="1050" y="132" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">(用 7168 算得 5.5T 错值)</text>
+<rect x="940" y="180" width="220" height="108" rx="10" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>><title>AttnRes</title>
+<text x="1050" y="204" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">AttnRes</text>
+<text x="1050" y="209" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="10.0" fill="#334155" text-anchor="middle" font-weight="400">12 层一块: prefix_sum+block_residual</text>
+<text x="1050" y="223" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="10.0" fill="#334155" text-anchor="middle" font-weight="400">每层 attn 前/后、MLP 前注入</text>
+<text x="1050" y="236" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="10.0" fill="#334155" text-anchor="middle" font-weight="400">可学习 query 线性打分</text>
+<text x="1050" y="250" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="10.0" fill="#334155" text-anchor="middle" font-weight="400">代码线性点积 vs 报告 [出入]</text>
+<rect x="940" y="300" width="220" height="108" rx="10" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>><title>SITU 激活</title>
+<text x="1050" y="324" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">SITU 激活</text>
+<text x="1050" y="336" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="10.5" fill="#334155" text-anchor="middle" font-weight="400">β1·tanh(g/β1)·σ(g)·β2·tanh(u/β2)</text>
+<text x="1050" y="350" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="10.5" fill="#334155" text-anchor="middle" font-weight="400">β1=4 β2=25 → 输出有界 ≤100</text>
+<text x="1050" y="364" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="10.5" fill="#334155" text-anchor="middle" font-weight="400">低精度训练友好</text>
+<rect x="940" y="420" width="220" height="108" rx="10" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>><title>发布状态</title>
+<text x="1050" y="444" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">发布状态</text>
+<text x="1050" y="448" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">推理参考实现(训练抛异常)</text>
+<text x="1050" y="463" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">核心算子 fla-core</text>
+<text x="1050" y="477" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">MTP: 报告1层/cfg=0 [不一致]</text>
+<text x="1050" y="492" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">权重 96 分片 8bit compressed</text></svg>
+</section><section class="model" id="sec-dsv4">
+<svg width="1180" height="1584" viewBox="0 0 1180 1584" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif"><defs><marker id="ah" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#64748b"/></marker></defs><rect x="0" y="0" width="1180" height="1584" fill="#fff"/><rect x="0" y="0" width="1180" height="44" fill="#0f172a"/><text x="24" y="29" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="17" fill="#f8fafc" font-weight="700">DeepSeek-V4-Flash</text><text x="1156" y="29" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#94a3b8" text-anchor="end">mHC + 滑窗/压缩注意力 + FP4 MoE + DSpark</text><rect x="370" y="60" width="440" height="66" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="590" y="84" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">输入</text>
+<text x="590" y="110" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">input_ids (B,T)｜43 层 / 4096 维 / 129280 词表</text>
+<line x1="590" y1="126" x2="590" y2="144" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="370" y="144" width="440" height="66" rx="10" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+<text x="590" y="168" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">Token Embedding</text>
+<text x="590" y="194" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">embed (129280→4096) → 4 条 HC 流 (B,T,4,4096)</text>
+<line x1="590" y1="210" x2="590" y2="228" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="370" y="228" width="440" height="66" rx="10" fill="#ffedd5" stroke="#f97316" stroke-width="1.5"/>
+<text x="590" y="252" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">双 RoPE</text>
+<text x="590" y="271" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">主 θ=1e4(滑窗)｜压缩 θ=1.6e5 + YaRN×16</text>
+<text x="590" y="285" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">压缩条目在窗口末尾 token 位置加 rope</text>
+<line x1="590" y1="294" x2="590" y2="312" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<text x="300" y="363" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="13" fill="#334155" text-anchor="start" font-weight="600">compress_ratios: 0,0=滑窗(SW)｜4=CSA(带 indexer)｜128=HCA｜前3层 hash 路由</text>
+<rect x="320" y="382" width="44" height="26" rx="13" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.2"/>
+<text x="342" y="399" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="10" fill="#334155" text-anchor="middle" font-weight="600">SW</text>
+<rect x="369" y="382" width="44" height="26" rx="13" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.2"/>
+<text x="391" y="399" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="10" fill="#334155" text-anchor="middle" font-weight="600">SW</text>
+<rect x="418" y="382" width="56" height="26" rx="13" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.2"/>
+<text x="446" y="399" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="10" fill="#334155" text-anchor="middle" font-weight="600">CSA</text>
+<rect x="479" y="382" width="56" height="26" rx="13" fill="#ffedd5" stroke="#f97316" stroke-width="1.2"/>
+<text x="507" y="399" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="10" fill="#334155" text-anchor="middle" font-weight="600">HCA</text>
+<rect x="540" y="382" width="56" height="26" rx="13" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.2"/>
+<text x="568" y="399" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="10" fill="#334155" text-anchor="middle" font-weight="600">CSA</text>
+<rect x="601" y="382" width="56" height="26" rx="13" fill="#ffedd5" stroke="#f97316" stroke-width="1.2"/>
+<text x="629" y="399" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="10" fill="#334155" text-anchor="middle" font-weight="600">HCA</text>
+<rect x="662" y="382" width="56" height="26" rx="13" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.2"/>
+<text x="690" y="399" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="10" fill="#334155" text-anchor="middle" font-weight="600">CSA</text>
+<rect x="723" y="382" width="56" height="26" rx="13" fill="#ffedd5" stroke="#f97316" stroke-width="1.2"/>
+<text x="751" y="399" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="10" fill="#334155" text-anchor="middle" font-weight="600">HCA</text>
+<text x="790" y="400" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12" fill="#64748b" text-anchor="start" font-weight="400">… 43 层（21 CSA + 20 HCA + 2 SW）</text>
+<text x="300" y="443" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="14.5" fill="#0f172a" text-anchor="start" font-weight="700">Block 0（sliding_window=128 · hash 路由 MoE）</text>
+<rect x="300" y="454" width="150" height="72" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="495" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">mHC 折叠</text>
+<rect x="462" y="454" width="438" height="72" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="479" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">hc_pre: 4流展平→RMS→F.linear(hc_attn_fn 24×16384)</text>
+<text x="681" y="494" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">→pre=sigmoid,post=2σ,comb=softmax+Sinkhorn×20(双随机)</text>
+<text x="681" y="509" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">→collapsed=Σ pre[k]·x[k]</text>
+<rect x="300" y="536" width="150" height="104" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+<text x="375" y="593" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">注意力（滑窗）</text>
+<rect x="462" y="536" width="438" height="104" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="562" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">MLA 单 KV 头: wq_a(4096→1024)→q_norm→wq_b(1024→64×512)</text>
+<text x="681" y="577" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">q RMS 归一化→rope 仅末64维; wkv(4096→512) 单头 MQA</text>
+<text x="681" y="592" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">get_window_topk_idxs: 最近 128 key</text>
+<text x="681" y="607" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">sparse_attn: gather topk KV + online softmax + attn_sink(64)</text>
+<text x="681" y="622" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">逆rope → 分组低秩 wo_a(8组×1024) → wo_b(8192→4096)</text>
+<line x1="270" y1="526" x2="270" y2="536" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="650" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="675" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">mHC 展开</text>
+<rect x="462" y="650" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="675" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">hc_post: y[k]=post[k]·子层输出 + Σ_j comb[j,k]·residual[j]</text>
+<line x1="270" y1="640" x2="270" y2="650" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="702" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="727" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">Post-Norm</text>
+<rect x="462" y="702" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="726" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">ffn_norm — RMSNorm</text>
+<line x1="270" y1="692" x2="270" y2="702" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="753" width="150" height="72" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+<text x="375" y="794" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">MoE（hash）</text>
+<rect x="462" y="753" width="438" height="72" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="778" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">前3层冻结表 tid2eid[129280×6] 按 token id 选专家</text>
+<text x="681" y="793" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">(选择静态,打分仍学); 256专家top6+1共享 FP4</text>
+<text x="681" y="808" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">swiglu_limit=10 clamp; fp32累积; +TP all_reduce</text>
+<line x1="270" y1="743" x2="270" y2="753" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="836" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="861" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">mHC 展开</text>
+<rect x="462" y="836" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="860" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">hc_post（FFN 站点）→ 下一层 4 流</text>
+<line x1="270" y1="826" x2="270" y2="836" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<text x="300" y="906" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="14.5" fill="#0f172a" text-anchor="start" font-weight="700">Block 2（CSA · compress_ratio=4 + indexer topk=512）</text>
+<rect x="300" y="917" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="942" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">mHC 折叠</text>
+<rect x="462" y="917" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="942" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">hc_pre（同上）</text>
+<rect x="300" y="968" width="150" height="104" rx="8" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.5"/>
+<text x="375" y="1025" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">注意力（CSA）</text>
+<rect x="462" y="968" width="438" height="104" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="994" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">滑窗128 + 压缩条目 (compress_ratio=4)</text>
+<text x="681" y="1009" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">Compressor: 每4 token 软池化 → entry=Σsoftmax(score+ape)·kv(fp32)</text>
+<text x="681" y="1024" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">coff=2 重叠窗口(Ca/Cb); 增量 decode 环形缓冲</text>
+<text x="681" y="1039" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">Indexer: 对压缩条目 ReLU(q·k)+头加权→topk=512</text>
+<text x="681" y="1054" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">压缩条目 rope θ=1.6e5 (位置 i·4)</text>
+<line x1="270" y1="958" x2="270" y2="968" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="1082" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="1107" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">mHC 展开</text>
+<rect x="462" y="1082" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="1107" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">hc_post（同上）</text>
+<line x1="270" y1="1072" x2="270" y2="1082" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="1134" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="1159" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">Post-Norm</text>
+<rect x="462" y="1134" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="1158" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">ffn_norm — RMSNorm</text>
+<line x1="270" y1="1124" x2="270" y2="1134" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="1185" width="150" height="57" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+<text x="375" y="1218" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">MoE（topk）</text>
+<rect x="462" y="1185" width="438" height="57" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="1210" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">Gate: sqrtsoftplus 打分→top6/256; noaux bias 只影响选择</text>
+<text x="681" y="1225" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">norm+×routed_scaling=1.5; FP4专家+1共享bf16</text>
+<line x1="270" y1="1175" x2="270" y2="1185" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="300" y="1252" width="150" height="42" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="375" y="1277" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">mHC 展开</text>
+<rect x="462" y="1252" width="438" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="681" y="1277" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11.5" fill="#334155" text-anchor="middle" font-weight="400">hc_post → 下一层</text>
+<line x1="270" y1="1242" x2="270" y2="1252" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="260" y="312" width="680" height="992" rx="14" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="600" y="341" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="700">Decoder Stack — mHC(4流) + 滑窗/压缩注意力 + FP4 MoE</text>
+<line x1="590" y1="1304" x2="590" y2="1322" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="370" y="1322" width="440" height="66" rx="10" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+<text x="590" y="1346" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">Final Norm + hc_head</text>
+<text x="590" y="1371" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">hc_head: 4流折叠回1流 → RMSNorm</text>
+<line x1="590" y1="1388" x2="590" y2="1406" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="370" y="1406" width="440" height="66" rx="10" fill="#fee2e2" stroke="#ef4444" stroke-width="1.5"/>
+<text x="590" y="1430" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">Head</text>
+<text x="590" y="1455" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">head → logits(129280)</text>
+<line x1="590" y1="1472" x2="590" y2="1490" stroke="#64748b" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="370" y="1490" width="440" height="66" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="590" y="1514" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">输出 + DSpark</text>
+<text x="590" y="1503" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">logits→采样</text>
+<text x="590" y="1518" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">DSpark: 3×DSparkBlock(mtp.0/1/2)</text>
+<text x="590" y="1532" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">+ DSparkMarkovHead(vocab→256→vocab)</text>
+<text x="590" y="1547" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">+ DSparkConfidenceHead</text>
+<text x="590" y="1561" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">noise_token=128799 占位草稿; 窗口topk草稿</text>
+<text x="590" y="1576" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">⚠ generate.py 未调用 forward_spec（未接线）[源码事实]</text>
+<rect x="940" y="60" width="220" height="108" rx="10" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>><title>mHC 超连接</title>
+<text x="1050" y="84" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">mHC 超连接</text>
+<text x="1050" y="88" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">4 条并行残差流 hc_mult=4</text>
+<text x="1050" y="103" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">pre/post/comb + Sinkhorn 20轮</text>
+<text x="1050" y="117" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">→双随机矩阵流形(非扩张)</text>
+<text x="1050" y="132" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">[源码事实] hc_split_sinkhorn</text>
+<rect x="940" y="180" width="220" height="108" rx="10" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>><title>规模</title>
+<text x="1050" y="204" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">规模</text>
+<text x="1050" y="215" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">≈282B 总参/≈11B 激活 [推导]</text>
+<text x="1050" y="230" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">专家 FP4: 0.5B/参数</text>
+<text x="1050" y="244" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">43层×256×25.2M</text>
+<rect x="940" y="300" width="220" height="108" rx="10" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>><title>量化</title>
+<text x="1050" y="324" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">量化</text>
+<text x="1050" y="321" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">权重 FP8(e4m3,block128×128,</text>
+<text x="1050" y="335" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">dynamic,ue8m0 scale)</text>
+<text x="1050" y="350" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">专家 FP4 + e8m0 scale</text>
+<text x="1050" y="364" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">tilelang act_quant/fp4_gemm</text>
+<text x="1050" y="379" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">convert.py FP4→FP8 折叠</text>
+<rect x="940" y="420" width="220" height="108" rx="10" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>><title>DSpark</title>
+<text x="1050" y="444" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="12.5" fill="#0f172a" text-anchor="middle" font-weight="700">DSpark</text>
+<text x="1050" y="448" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">Markov 先验加主 logits</text>
+<text x="1050" y="463" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">confidence head 决定接受</text>
+<text x="1050" y="477" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">vLLM: num_speculative_tokens=7</text>
+<text x="1050" y="492" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#334155" text-anchor="middle" font-weight="400">SGLang: DSPARK</text></svg>
+</section>
+<section class="model" id="sec-compare"><div id="compare" class="active"><div class="card"><div class="card-t">nanoGPT<span class="card-m">124M·教学</span></div><table class="cmp"><tr><td class="ck">位置</td><td>查表 wpe(不可外推)</td></tr><tr><td class="ck">注意力</td><td>MHA 12×64</td></tr><tr><td class="ck">FFN</td><td>Dense GELU 4C</td></tr><tr><td class="ck">残差</td><td>单流 LayerNorm</td></tr></table></div><div class="card"><div class="card-t">MiniMind<span class="card-m">26M·教学</span></div><table class="cmp"><tr><td class="ck">位置</td><td>RoPE θ=1e6 (YaRN)</td></tr><tr><td class="ck">注意力</td><td>GQA 8/4KV + cache</td></tr><tr><td class="ck">FFN</td><td>SwiGLU/4专家top1</td></tr><tr><td class="ck">残差</td><td>单流 RMSNorm</td></tr></table></div><div class="card"><div class="card-t">Qwen3.6<span class="card-m">27B·官方</span></div><table class="cmp"><tr><td class="ck">位置</td><td>mrope[11,11,10] θ=1e7</td></tr><tr><td class="ck">注意力</td><td>GatedDeltaNet×48+GQA×16</td></tr><tr><td class="ck">FFN</td><td>Dense 17408</td></tr><tr><td class="ck">残差</td><td>单流+Gated Norm</td></tr></table></div><div class="card"><div class="card-t">GLM-5.2<span class="card-m">≈740B[推导]</span></div><table class="cmp"><tr><td class="ck">位置</td><td>RoPE interleave θ=8M</td></tr><tr><td class="ck">注意力</td><td>MLA 64头+DSA topk2048</td></tr><tr><td class="ck">FFN</td><td>Dense×3+MoE256top8</td></tr><tr><td class="ck">残差</td><td>单流 RMSNorm</td></tr></table></div><div class="card"><div class="card-t">Kimi-K3<span class="card-m">2.8T·官方</span></div><table class="cmp"><tr><td class="ck">位置</td><td>无 (NoPE)</td></tr><tr><td class="ck">注意力</td><td>KDA×69+GatedMLA×24</td></tr><tr><td class="ck">FFN</td><td>Latent MoE 896top16</td></tr><tr><td class="ck">残差</td><td>AttnRes 12层块</td></tr></table></div><div class="card"><div class="card-t">DSV4<span class="card-m">≈282B[推导]</span></div><table class="cmp"><tr><td class="ck">位置</td><td>双 RoPE (1e4/1.6e5)</td></tr><tr><td class="ck">注意力</td><td>MLA单KV头+滑窗+HCA/CSA</td></tr><tr><td class="ck">FFN</td><td>MoE256top6 FP4</td></tr><tr><td class="ck">残差</td><td>mHC 4流+Sinkhorn</td></tr></table></div></div></section></main>
+<footer>生成于 2026-08 · 数据来源: 各模型 config.json、transformers 内建建模、Kimi/DSV4 官方代码。配套手册见仓库根目录 00-08 *.md。</footer>
+<script>
+const tabs=document.querySelectorAll('.tab'),secs=document.querySelectorAll('.model');let z=1;
+function show(k){tabs.forEach(t=>t.classList.toggle('active',t.dataset.t===k));secs.forEach(s=>s.classList.toggle('active',s.id==='sec-'+k));}
+tabs.forEach(t=>t.addEventListener('click',()=>show(t.dataset.t)));show('unified');
+document.getElementById('zin').onclick=()=>{z=Math.min(3,z+0.25);apply();};
+document.getElementById('zout').onclick=()=>{z=Math.max(0.4,z-0.25);apply();};
+document.getElementById('zreset').onclick=()=>{z=1;apply();};
+function apply(){document.querySelectorAll('.model svg').forEach(s=>s.style.width=(z*100)+'%');}
+</script></body></html>

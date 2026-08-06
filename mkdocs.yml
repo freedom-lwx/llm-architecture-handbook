@@ -1,0 +1,78 @@
+site_name: 大模型架构学习手册
+site_description: nanoGPT/MiniMind/Qwen3.6-27B/GLM-5.2/Kimi-K3/DeepSeek-V4-Flash 源码级架构解析
+site_author: freedom-lwx
+repo_url: https://github.com/freedom-lwx/llm-architecture-handbook
+repo_name: freedom-lwx/llm-architecture-handbook
+edit_uri: edit/master/docs/
+
+theme:
+  name: material
+  language: zh
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.indexes
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.action.edit
+    - content.action.view
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: 切换到暗色
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: 切换到亮色
+  font: false
+  icon:
+    repo: fontawesome/brands/github
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - toc:
+      permalink: true
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+extra:
+  generator: false
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/freedom-lwx/llm-architecture-handbook
+
+nav:
+  - 首页: index.md
+  - 00 · 导读: 00_导读.md
+  - 01 · 基础积木: 01_基础积木.md
+  - 模型逐个讲:
+    - 02 · nanoGPT: 02_nanoGPT.md
+    - 03 · MiniMind: 03_MiniMind.md
+    - 04 · Qwen3.6-27B: 04_Qwen3.6-27B.md
+    - 05 · GLM-5.2: 05_GLM-5.2.md
+    - 06 · Kimi-K3: 06_Kimi-K3.md
+    - 07 · DeepSeek-V4-Flash: 07_DeepSeek-V4-Flash.md
+  - 08 · 横向对比与演进: 08_横向对比与演进.md
+  - 结构图（交互式）: 结构图.md

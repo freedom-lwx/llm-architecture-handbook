@@ -13,3 +13,7 @@ venv/
 .codegraph/
 .omo/
 .pi-subagents/
+
+# MkDocs build output
+site/
+docs/site/
