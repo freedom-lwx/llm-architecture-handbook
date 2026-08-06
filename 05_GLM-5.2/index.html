@@ -1,0 +1,1921 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="nanoGPT/MiniMind/Qwen3.6-27B/GLM-5.2/Kimi-K3/DeepSeek-V4-Flash 源码级架构解析">
+      
+      
+        <meta name="author" content="freedom-lwx">
+      
+      
+      
+        <link rel="prev" href="../04_Qwen3.6-27B/">
+      
+      
+        <link rel="next" href="../06_Kimi-K3/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>05 · GLM-5.2 - 大模型架构学习手册</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#05-glm-52mla-dsaindexshare-moe" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href=".." title="大模型架构学习手册" class="md-header__button md-logo" aria-label="大模型架构学习手册" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            大模型架构学习手册
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              05 · GLM-5.2
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="切换到暗色"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="切换到暗色" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="切换到亮色"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="切换到亮色" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/freedom-lwx/llm-architecture-handbook" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    freedom-lwx/llm-architecture-handbook
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="标签" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  首页
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../00_%E5%AF%BC%E8%AF%BB/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  00 · 导读
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../01_%E5%9F%BA%E7%A1%80%E7%A7%AF%E6%9C%A8/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  01 · 基础积木
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../02_nanoGPT/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  模型逐个讲
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../08_%E6%A8%AA%E5%90%91%E5%AF%B9%E6%AF%94%E4%B8%8E%E6%BC%94%E8%BF%9B/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  08 · 横向对比与演进
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../%E7%BB%93%E6%9E%84%E5%9B%BE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  结构图（交互式）
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="大模型架构学习手册" class="md-nav__button md-logo" aria-label="大模型架构学习手册" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    大模型架构学习手册
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/freedom-lwx/llm-architecture-handbook" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    freedom-lwx/llm-architecture-handbook
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    首页
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../00_%E5%AF%BC%E8%AF%BB/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    00 · 导读
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01_%E5%9F%BA%E7%A1%80%E7%A7%AF%E6%9C%A8/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    01 · 基础积木
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    模型逐个讲
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    模型逐个讲
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02_nanoGPT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    02 · nanoGPT
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03_MiniMind/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    03 · MiniMind
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04_Qwen3.6-27B/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    04 · Qwen3.6-27B
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    05 · GLM-5.2
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    05 · GLM-5.2
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. 一句话定位
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. 配置表
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. 数据流总图
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. 逐块解剖
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. 逐块解剖">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-mlaglmmoedsaattention309" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 MLA（GlmMoeDsaAttention，:309）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-dsa-indexerglmmoedsaindexer172" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 DSA Indexer（GlmMoeDsaIndexer，:172）——本章核心
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-indexshare-topkglm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 IndexShare（跨层共享 topk）——GLM 的关键创新
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-moeglmmoedsamoe553" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.4 MoE（GlmMoeDsaMoE，:553）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#45-dense-3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.5 Dense 层（前 3 层）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. 关键创新深挖
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. 关键创新深挖">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-dsa-vs-mla-vs-gqa" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 DSA vs MLA vs GQA：三层正交压缩
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-dsa-indexer-mla-qk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 DSA 的 indexer 为什么用独立投影而不直接用 MLA 的 Q/K？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-rope-8m-1m" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 RoPE θ=8M 与 1M 上下文
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. 参数量与账本
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. 参数量与账本">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 总参数（推导）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-kv-cache" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 KV cache
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-flops1m" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.3 注意力 FLOPs（1M 上下文）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-vs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. 训练 vs 推理
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. 检查题
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        下一步
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06_Kimi-K3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    06 · Kimi-K3
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07_DeepSeek-V4-Flash/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    07 · DeepSeek-V4-Flash
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08_%E6%A8%AA%E5%90%91%E5%AF%B9%E6%AF%94%E4%B8%8E%E6%BC%94%E8%BF%9B/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    08 · 横向对比与演进
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E7%BB%93%E6%9E%84%E5%9B%BE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    结构图（交互式）
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. 一句话定位
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. 配置表
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. 数据流总图
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. 逐块解剖
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. 逐块解剖">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-mlaglmmoedsaattention309" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 MLA（GlmMoeDsaAttention，:309）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-dsa-indexerglmmoedsaindexer172" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 DSA Indexer（GlmMoeDsaIndexer，:172）——本章核心
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-indexshare-topkglm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 IndexShare（跨层共享 topk）——GLM 的关键创新
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-moeglmmoedsamoe553" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.4 MoE（GlmMoeDsaMoE，:553）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#45-dense-3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.5 Dense 层（前 3 层）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. 关键创新深挖
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. 关键创新深挖">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-dsa-vs-mla-vs-gqa" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 DSA vs MLA vs GQA：三层正交压缩
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-dsa-indexer-mla-qk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 DSA 的 indexer 为什么用独立投影而不直接用 MLA 的 Q/K？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-rope-8m-1m" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 RoPE θ=8M 与 1M 上下文
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. 参数量与账本
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. 参数量与账本">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 总参数（推导）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-kv-cache" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 KV cache
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-flops1m" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.3 注意力 FLOPs（1M 上下文）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-vs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. 训练 vs 推理
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. 检查题
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        下一步
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/freedom-lwx/llm-architecture-handbook/edit/master/docs/05_GLM-5.2.md" title="编辑此页" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+    
+      
+    
+    <a href="https://github.com/freedom-lwx/llm-architecture-handbook/raw/master/docs/05_GLM-5.2.md" title="查看本页的源代码" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"/></svg>
+    </a>
+  
+
+
+<h1 id="05-glm-52mla-dsaindexshare-moe">05 · GLM-5.2：MLA + DSA/IndexShare + MoE<a class="headerlink" href="#05-glm-52mla-dsaindexshare-moe" title="Permanent link">&para;</a></h1>
+<h2 id="1">1. 一句话定位<a class="headerlink" href="#1" title="Permanent link">&para;</a></h2>
+<p>GLM-5.2 是 DeepSeek-V3 架构的直接演化：78 层全部用 <strong>MLA</strong>（Multi-head Latent Attention，KV 压到 576 维/token），在此基础上引入 <strong>DSA</strong>（DeepSeek Sparse Attention，每个 query 只和 top-2048 个最相关 token 做注意力）和 <strong>IndexShare</strong>（每 4 层共享一次稀疏索引，省掉 3/4 的索引计算），再叠 256 专家 top-8 的 sigmoid 路由 MoE。它的核心命题是：<strong>在 MLA 已经把 KV 显存压到极低之后，如何把注意力计算本身从 <span class="arithmatex">\(O(T^2)\)</span> 砍到 <span class="arithmatex">\(O(T\cdot\text{topk})\)</span></strong>。</p>
+<blockquote>
+<p>源码：transformers 5.14 内建 <code>models/glm_moe_dsa/modeling_glm_moe_dsa.py</code>（809 行）。config <code>zai-org/GLM-5.2</code>（revision <code>b4734de4</code>）。<code>[源码事实][配置值]</code></p>
+</blockquote>
+<hr />
+<h2 id="2">2. 配置表<a class="headerlink" href="#2" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>值</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>hidden_size</code></td>
+<td>6144</td>
+<td><span class="arithmatex">\(d\)</span></td>
+</tr>
+<tr>
+<td><code>num_hidden_layers</code></td>
+<td>78</td>
+<td><span class="arithmatex">\(L\)</span></td>
+</tr>
+<tr>
+<td><code>vocab_size</code></td>
+<td>154880</td>
+<td><span class="arithmatex">\(V\)</span></td>
+</tr>
+<tr>
+<td><code>num_attention_heads</code></td>
+<td>64</td>
+<td><span class="arithmatex">\(h\)</span>（Q 头）</td>
+</tr>
+<tr>
+<td><code>num_key_value_heads</code></td>
+<td>64</td>
+<td>MLA 下此字段名义值，实际 KV 是低秩</td>
+</tr>
+<tr>
+<td><code>head_dim</code> / <code>qk_head_dim</code></td>
+<td>192 / 256</td>
+<td>nope 192 + rope 64</td>
+</tr>
+<tr>
+<td><code>qk_nope_head_dim</code></td>
+<td>192</td>
+<td>非旋转部分</td>
+</tr>
+<tr>
+<td><code>qk_rope_head_dim</code></td>
+<td>64</td>
+<td>旋转部分（每头共享）</td>
+</tr>
+<tr>
+<td><code>v_head_dim</code></td>
+<td>256</td>
+<td>V 头维</td>
+</tr>
+<tr>
+<td><code>q_lora_rank</code></td>
+<td>2048</td>
+<td>Q 低秩维 <span class="arithmatex">\(d_r\)</span></td>
+</tr>
+<tr>
+<td><code>kv_lora_rank</code></td>
+<td>512</td>
+<td>KV 低秩维 <span class="arithmatex">\(d_c\)</span></td>
+</tr>
+<tr>
+<td><code>first_k_dense_replace</code></td>
+<td>3</td>
+<td>前 3 层用 dense FFN</td>
+</tr>
+<tr>
+<td><code>n_routed_experts</code></td>
+<td>256</td>
+<td>路由专家数</td>
+</tr>
+<tr>
+<td><code>num_experts_per_tok</code></td>
+<td>8</td>
+<td>top-k</td>
+</tr>
+<tr>
+<td><code>n_shared_experts</code></td>
+<td>1</td>
+<td>共享专家</td>
+</tr>
+<tr>
+<td><code>moe_intermediate_size</code></td>
+<td>2048</td>
+<td>专家中间维（latent）</td>
+</tr>
+<tr>
+<td><code>intermediate_size</code></td>
+<td>12288</td>
+<td>dense 层 FFN 中间维</td>
+</tr>
+<tr>
+<td><code>scoring_func</code></td>
+<td>sigmoid</td>
+<td>路由打分</td>
+</tr>
+<tr>
+<td><code>routed_scaling_factor</code></td>
+<td>2.5</td>
+<td>top-k 权重缩放</td>
+</tr>
+<tr>
+<td><code>n_group</code> / <code>topk_group</code></td>
+<td>1 / 1</td>
+<td>组级路由（当前配置退化为全局 top-k）</td>
+</tr>
+<tr>
+<td><strong>DSA / IndexShare</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>index_topk</code></td>
+<td>2048</td>
+<td>每个 query 选 2048 个 token</td>
+</tr>
+<tr>
+<td><code>index_n_heads</code></td>
+<td>32</td>
+<td>indexer 头数</td>
+</tr>
+<tr>
+<td><code>index_head_dim</code></td>
+<td>128</td>
+<td>indexer 头维</td>
+</tr>
+<tr>
+<td><code>index_topk_freq</code></td>
+<td>4</td>
+<td>每 4 层一个 full indexer</td>
+</tr>
+<tr>
+<td><code>indexer_types</code></td>
+<td>full/shared 循环</td>
+<td>78 层模式（见下）</td>
+</tr>
+<tr>
+<td><code>index_skip_topk_offset</code></td>
+<td>3</td>
+<td></td>
+</tr>
+<tr>
+<td><code>index_share_for_mtp_iteration</code></td>
+<td>True</td>
+<td>MTP 也共享索引</td>
+</tr>
+<tr>
+<td><code>indexer_rope_interleave</code></td>
+<td>True</td>
+<td>indexer 用 interleaved RoPE</td>
+</tr>
+<tr>
+<td><strong>位置</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>rope_parameters.rope_theta</code></td>
+<td>8,000,000</td>
+<td>大 θ 支持 1M</td>
+</tr>
+<tr>
+<td><code>rope_interleave</code></td>
+<td>True</td>
+<td>interleaved 旋转</td>
+</tr>
+<tr>
+<td><code>max_position_embeddings</code></td>
+<td>1,048,576</td>
+<td>1M</td>
+</tr>
+<tr>
+<td><strong>MTP</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>num_nextn_predict_layers</code></td>
+<td>1</td>
+<td>MTP 一层（权重在，引擎实现）</td>
+</tr>
+</tbody>
+</table>
+<p><code>[配置值]</code></p>
+<p><strong>indexer_types 模式</strong>（78 项）：前 3 层全是 <code>full</code>；从第 3 层起 <code>full, shared, shared, shared</code> 循环（每 4 层一个 full）。即 full indexer 在层 0,1,2,3,7,11,...,75，其余层 shared 复用上一个 full 的 topk。<code>[源码事实]</code></p>
+<p><strong>mlp_layer_types</strong>：前 3 层 <code>dense</code>，后 75 层 <code>sparse</code>（MoE）。</p>
+<hr />
+<h2 id="3">3. 数据流总图<a class="headerlink" href="#3" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>input_ids (B,T)
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  │  embed_tokens (154880→6144)
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  ▼
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>  position_embeddings = rotary_emb(h, position_ids)   逐 token 实时算 RoPE cos/sin
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  │
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>  │  topk_indices = None
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  ▼
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>┌──────────────────────────────────────────────────────────────────────┐
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>│ DecoderLayer ×78:                                                    │
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│                                                                      │
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>│  residual = x                                                        │
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>│  x = input_layernorm(x)                  RMSNorm                     │
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>│  x, _, topk_indices = self_attn(                                     │
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>│        x, position_emb, attn_mask, past_kv, position_ids,            │
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>│        prev_topk_indices=topk_indices)   ← 跨层传递 topk！           │
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>│  x = residual + x                                                    │
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>│                                                                      │
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>│  residual = x                                                        │
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>│  x = post_attention_layernorm(x)                                     │
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>│  x = mlp(x)                              Dense(前3) or MoE(后75)     │
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>│  x = residual + x                                                    │
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>│                                                                      │
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>│  Attention 内部 (GlmMoeDsaAttention):                                │
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>│   1. q: h→2048(q_a)→RMSNorm→q_b→(64,256)                          │
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>│      split q_pass(192)+q_rot(64), apply interleave RoPE             │
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>│   2. kv: h→576 [512 c_KV ; 64 k_rot]                                │
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>│      c_KV→RMSNorm→kv_b→(64,448)→split k_pass(192)+v(256)           │
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>│      k_rot→(1,64)→expand 64 头 (MQA 共享)                            │
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>│      cat: q,k = [pass;rot] 各 256 维                                 │
+<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>│   3. DSA:                                                           │
+<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>│      if indexer is full:  GlmMoeDsaIndexer(...)→topk [B,S,2048]     │
+<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>│      else (shared):        topk = prev_topk_indices  (直接复用)      │
+<a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>│   4. 用 topk 构造稀疏 mask / 传给 flash_mla_with_kvcache(indices=)  │
+<a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a>│   5. 稀疏注意力 → o_proj                                            │
+<a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a>└──────────────────────────────────────────────────────────────────────┘
+<a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a>  │  norm (RMSNorm)
+<a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a>  ▼
+<a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a>lm_head (6144→154880)   (tie_word_embeddings=False)
+<a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a>  │
+<a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a>logits
+</code></pre></div>
+<hr />
+<h2 id="4">4. 逐块解剖<a class="headerlink" href="#4" title="Permanent link">&para;</a></h2>
+<h3 id="41-mlaglmmoedsaattention309">4.1 MLA（GlmMoeDsaAttention，:309）<a class="headerlink" href="#41-mlaglmmoedsaattention309" title="Permanent link">&para;</a></h3>
+<p>MLA 的数学在 01 章第 10 节已完整推导。这里用 GLM 真实维度走一遍 shape，源码在 <code>:385</code>：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">q_resid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">q_a_layernorm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q_a_proj</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">))</span>      <span class="c1"># (B,S,2048)</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">q_states</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">q_b_proj</span><span class="p">(</span><span class="n">q_resid</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">query_shape</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># (B,64,S,256)</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">q_pass</span><span class="p">,</span> <span class="n">q_rot</span> <span class="o">=</span> <span class="n">split</span><span class="p">(</span><span class="n">q_states</span><span class="p">,</span> <span class="p">[</span><span class="mi">192</span><span class="p">,</span><span class="mi">64</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="n">compressed_kv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kv_a_proj_with_mqa</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">)</span>          <span class="c1"># (B,S,576)</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="n">k_pass</span><span class="p">,</span> <span class="n">k_rot</span> <span class="o">=</span> <span class="n">split</span><span class="p">(</span><span class="n">compressed_kv</span><span class="p">,</span> <span class="p">[</span><span class="mi">512</span><span class="p">,</span><span class="mi">64</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="n">k_pass</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kv_b_proj</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kv_a_layernorm</span><span class="p">(</span><span class="n">k_pass</span><span class="p">))</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">key_shape</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="n">k_pass</span><span class="p">,</span> <span class="n">value_states</span> <span class="o">=</span> <span class="n">split</span><span class="p">(</span><span class="n">k_pass</span><span class="p">,</span> <span class="p">[</span><span class="mi">192</span><span class="p">,</span><span class="mi">256</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>         <span class="c1"># (B,64,S,192)/(B,64,S,256)</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="n">k_rot</span> <span class="o">=</span> <span class="n">k_rot</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">B</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="n">S</span><span class="p">,</span><span class="mi">64</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="n">k_pass</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>     <span class="c1"># (B,64,S,64) MQA 共享</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="n">q_rot</span><span class="p">,</span> <span class="n">k_rot</span> <span class="o">=</span> <span class="n">apply_rotary_pos_emb_interleave</span><span class="p">(</span><span class="n">q_rot</span><span class="p">,</span> <span class="n">k_rot</span><span class="p">,</span> <span class="n">cos</span><span class="p">,</span> <span class="n">sin</span><span class="p">)</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="n">query</span> <span class="o">=</span> <span class="n">cat</span><span class="p">([</span><span class="n">q_pass</span><span class="p">,</span><span class="n">q_rot</span><span class="p">],</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>   <span class="c1"># (B,64,S,256)</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="n">key</span>   <span class="o">=</span> <span class="n">cat</span><span class="p">([</span><span class="n">k_pass</span><span class="p">,</span><span class="n">k_rot</span><span class="p">],</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>    <span class="c1"># (B,64,S,256)</span>
+</code></pre></div>
+<p>关键点：
+- <strong>KV 缓存的是 576 维</strong>（<code>c_KV</code> 512 + <code>k_rot</code> 64），不是 64×256=16384 维。每 token 每层 1152 B（bf16）。78 层 × 1M token ≈ 90 GB——这是单卡 A100 80GB 略超、需要量化或多卡的量级。<code>[推导]</code>
+- RoPE 用 <strong>interleaved</strong>（相邻维配对），和 MiniMind/Qwen 的 half-split 不同；DSA indexer 也用 interleaved，保持一致。
+- <code>k_rot</code> 是单头（1）expand 到 64 头——位置键在所有头间共享（MQA-style），只有 64 维。
+- <code>scaling = 256^{-0.5}</code>；如果配置了 YaRN mscale 会再乘 mscale²（GLM 当前 <code>rope_type=default</code>，无缩放）。</p>
+<h3 id="42-dsa-indexerglmmoedsaindexer172">4.2 DSA Indexer（GlmMoeDsaIndexer，:172）——本章核心<a class="headerlink" href="#42-dsa-indexerglmmoedsaindexer172" title="Permanent link">&para;</a></h3>
+<p>DSA 要解决的问题：MLA 把 KV 显存压下来了，但注意力计算 <span class="arithmatex">\(\text{softmax}(QK^\top)V\)</span> 仍是 <span class="arithmatex">\(O(T^2)\)</span>——1M 长度下每对 query-key 都算完全不可行。DSA 的思路：<strong>先用一个轻量 indexer 给每个 query 选出最相关的 top-2048 个 token，主注意力只在这 2048 个上算 softmax</strong>。</p>
+<p>Indexer 有自己独立的轻量投影（不共用 MLA 的 Q/K），源码 <code>:204</code>：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hidden_states</span><span class="p">,</span> <span class="n">q_resid</span><span class="p">,</span> <span class="n">position_embeddings</span><span class="p">,</span> <span class="n">attention_mask</span><span class="p">,</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>            <span class="n">position_ids</span><span class="p">,</span> <span class="n">past_key_values</span><span class="p">):</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">q</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wq_b</span><span class="p">(</span><span class="n">q_resid</span><span class="p">)</span>                           <span class="c1"># q_resid 是 MLA 的 q_a 输出 (B,S,2048)</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">q</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">B</span><span class="p">,</span><span class="n">S</span><span class="p">,</span><span class="mi">32</span><span class="p">,</span><span class="mi">128</span><span class="p">)</span>                          <span class="c1"># indexer 用 32 头×128 维</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="n">q_rot</span><span class="p">,</span> <span class="n">q_pass</span> <span class="o">=</span> <span class="n">split</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="p">[</span><span class="mi">64</span><span class="p">,</span><span class="mi">64</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>       <span class="c1"># 前 64 维 RoPE</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="n">k</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">k_norm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wk</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">))</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># (B,S,1,128) 单键头!</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="n">k_rot</span><span class="p">,</span> <span class="n">k_pass</span> <span class="o">=</span> <span class="n">split</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="p">[</span><span class="mi">64</span><span class="p">,</span><span class="mi">64</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="n">q_rot</span><span class="p">,</span><span class="n">k_rot</span> <span class="o">=</span> <span class="n">apply_rotary_pos_emb_interleave</span><span class="p">(</span><span class="n">q_rot</span><span class="p">,</span><span class="n">k_rot</span><span class="p">,</span><span class="n">cos</span><span class="p">,</span><span class="n">sin</span><span class="p">)</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>    <span class="n">q</span> <span class="o">=</span> <span class="n">cat</span><span class="p">([</span><span class="n">q_rot</span><span class="p">,</span><span class="n">q_pass</span><span class="p">],</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span> <span class="n">k</span> <span class="o">=</span> <span class="n">cat</span><span class="p">([</span><span class="n">k_rot</span><span class="p">,</span><span class="n">k_pass</span><span class="p">],</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># (B,S,128)</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>    <span class="k">if</span> <span class="n">past_key_values</span><span class="p">:</span> <span class="n">k</span> <span class="o">=</span> <span class="n">past_key_values</span><span class="o">.</span><span class="n">update_indexer</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">layer_idx</span><span class="p">)</span>  <span class="c1"># 独立 indexer K cache</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>    <span class="n">scores</span> <span class="o">=</span> <span class="n">matmul</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">float</span><span class="p">(),</span> <span class="n">k</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span> <span class="o">*</span> <span class="p">(</span><span class="mi">128</span><span class="o">**-</span><span class="mf">0.5</span><span class="p">)</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>    <span class="n">scores</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span>                                          <span class="c1"># (B,S,32,T)</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>    <span class="n">weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights_proj</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">32</span><span class="o">**-</span><span class="mf">0.5</span><span class="p">)</span>         <span class="c1"># (B,S,32) 每头权重</span>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>    <span class="n">index_scores</span> <span class="o">=</span> <span class="n">matmul</span><span class="p">(</span><span class="n">weights</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">),</span> <span class="n">scores</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="c1"># (B,S,T) 加权求和</span>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>    <span class="c1"># + 因果掩码</span>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>    <span class="k">return</span> <span class="n">index_scores</span><span class="o">.</span><span class="n">topk</span><span class="p">(</span><span class="mi">2048</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">indices</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">int32</span><span class="p">)</span>         <span class="c1"># (B,S,2048)</span>
+</code></pre></div>
+<p>逐层拆解这个打分机制：</p>
+<ol>
+<li><strong>q 来自 MLA 的 <code>q_resid</code></strong>（2048 维低秩），indexer 用自己的 <code>wq_b: 2048→32×128</code> 投影。注意它复用了 MLA 的 q_a 输出，省一次 h→2048 投影。</li>
+<li><strong>k 是单头</strong>：<code>wk: 6144→128</code>，所有 query 头共享同一组键。这把 indexer 的 KV cache 压到 128 维/token（比 MLA 主 KV 还小）。</li>
+<li><strong>打分用 ReLU 不是 softmax</strong>：<span class="arithmatex">\(\text{scores}=\text{ReLU}(q\cdot k/\sqrt{128})\)</span>。ReLU 让不相关的对得 0 分，相关对得正分，再加权——这是"内容相关性"的稀疏选择，不需要归一化。</li>
+<li><strong>多头加权聚合</strong>：32 个头各自打出 (B,S,T) 分数，用 <code>weights_proj(h)</code> 生成每头权重，加权求和成 (B,S,T)。不同头可以关注不同模式（一个头找语法依赖、一个头找实体共现）。</li>
+<li><strong>加因果掩码</strong>后取 top-2048。</li>
+</ol>
+<p><strong>输出的 topk_indices 怎么用？</strong>（<code>:424</code>）
+- eager/sdpa 路径：构造布尔 mask，把不在 topk 的位置填 <code>-inf</code>，让 softmax 归零。
+- flash 路径：直接把 <code>indices</code> 传给 <code>flash_mla_with_kvcache</code>，kernel 只 gather 这 2048 个 KV 做注意力，不实例化完整 <span class="arithmatex">\(T\times T\)</span>。</p>
+<p>计算复杂度：注意力从 <span class="arithmatex">\(O(T^2 d)\)</span> 降到 <span class="arithmatex">\(O(T\cdot 2048\cdot d)\)</span>。1M 长度下，2048 是 <span class="arithmatex">\(T\)</span> 的 0.2%——理论加速 ~500 倍（实际受 gather 和 indexer 开销影响，官方报告 FLOPs ↓2.9× with IndexShare）。<code>[官方材料]</code></p>
+<h3 id="43-indexshare-topkglm">4.3 IndexShare（跨层共享 topk）——GLM 的关键创新<a class="headerlink" href="#43-indexshare-topkglm" title="Permanent link">&para;</a></h3>
+<p>DSA indexer 本身也有成本（每头 q·k 是 <span class="arithmatex">\(O(T^2\cdot32)\)</span>，虽然 32 头比主注意力 64 头轻）。GLM 发现：<strong>相邻层的稀疏注意力模式高度相关</strong>——第 4 层选的 top-2048 个 token，第 5、6 层大部分也会选。</p>
+<p>所以 <code>indexer_types</code> 设计成 <code>full, shared, shared, shared</code>：
+- <strong>full 层</strong>（每 4 层一个）：真正跑 indexer，算出 topk_indices。
+- <strong>shared 层</strong>：<code>self.indexer = None</code>，直接用 <code>prev_topk_indices</code>（上一个 full 层传下来的）。</p>
+<p>源码 <code>:406</code>：
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">indexer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>          <span class="c1"># full 层</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="n">topk_indices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">indexer</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">,</span> <span class="n">q_resid</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">else</span><span class="p">:</span>                                  <span class="c1"># shared 层</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">topk_indices</span> <span class="o">=</span> <span class="n">prev_topk_indices</span>   <span class="c1"># 直接复用，不计算</span>
+</code></pre></div></p>
+<p>跨层传递在 <code>GlmMoeDsaModel.forward</code>（:715）：
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">topk_indices</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">decoder_layer</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">):</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="n">hidden_states</span><span class="p">,</span> <span class="n">topk_indices</span> <span class="o">=</span> <span class="n">decoder_layer</span><span class="p">(</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>        <span class="o">...</span><span class="p">,</span> <span class="n">prev_topk_indices</span><span class="o">=</span><span class="n">topk_indices</span><span class="p">)</span>  <span class="c1"># 每层输出自己的 topk 给下层</span>
+</code></pre></div></p>
+<p>效果：78 层里只有 ~20 个 full indexer（前 3 层 + 每 4 层一个），其余 ~58 层零索引计算。这是"计算复用"思路——和 KV cache 复用 K/V 是同一个哲学，只是复用的是稀疏索引。</p>
+<h3 id="44-moeglmmoedsamoe553">4.4 MoE（GlmMoeDsaMoE，:553）<a class="headerlink" href="#44-moeglmmoedsamoe553" title="Permanent link">&para;</a></h3>
+<p>GLM 的 MoE 是 DeepSeek-V3 风格 sigmoid 路由 + 共享专家：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">GlmMoeDsaMoE</span><span class="p">:</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">experts</span> <span class="o">=</span> <span class="n">GlmMoeDsaExperts</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>       <span class="c1"># 256 专家</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">gate</span> <span class="o">=</span> <span class="n">GlmMoeDsaTopkRouter</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">shared_experts</span> <span class="o">=</span> <span class="n">GlmMoeDsaMLP</span><span class="p">(</span><span class="n">intermediate</span><span class="o">=</span><span class="n">moe_intermediate_size</span><span class="o">*</span><span class="n">n_shared</span><span class="p">)</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="c1"># n_shared=1, shared expert 中间维 2048（和 routed 专家同尺寸）</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">):</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>        <span class="n">residuals</span> <span class="o">=</span> <span class="n">hidden_states</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>        <span class="n">_</span><span class="p">,</span> <span class="n">topk_weights</span><span class="p">,</span> <span class="n">topk_indices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gate</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">)</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>        <span class="n">hidden_states</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">experts</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">,</span> <span class="n">topk_indices</span><span class="p">,</span> <span class="n">topk_weights</span><span class="p">)</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>        <span class="n">hidden_states</span> <span class="o">=</span> <span class="n">hidden_states</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">shared_experts</span><span class="p">(</span><span class="n">residuals</span><span class="p">)</span>  <span class="c1"># 共享专家无条件加</span>
+</code></pre></div>
+<p><strong>Router</strong>（:472）：
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">router_logits</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">linear</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">float</span><span class="p">(),</span> <span class="n">gate</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">float</span><span class="p">())</span>     <span class="c1"># (B*S, 256)</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">scores</span> <span class="o">=</span> <span class="n">router_logits</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">()</span>                            <span class="c1"># 多标签，非 softmax</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">scores_for_choice</span> <span class="o">=</span> <span class="n">scores</span> <span class="o">+</span> <span class="n">e_score_correction_bias</span>        <span class="c1"># noaux bias（当前恒零）</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># n_group=1, topk_group=1 时组逻辑退化为全局 top-k</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="n">topk_indices</span> <span class="o">=</span> <span class="n">scores_for_choice</span><span class="o">.</span><span class="n">topk</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="n">topk_weights</span> <span class="o">=</span> <span class="n">scores</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">topk_indices</span><span class="p">)</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="n">topk_weights</span> <span class="o">/=</span> <span class="n">topk_weights</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1e-20</span>   <span class="c1"># 归一化</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="n">topk_weights</span> <span class="o">*=</span> <span class="mf">2.5</span>                                         <span class="c1"># routed_scaling_factor</span>
+</code></pre></div></p>
+<p>注意：
+- <strong>sigmoid 不是 softmax</strong>：专家分数不互相竞争归一化，一个 token 可以同时给多个专家高分。top-k 后再归一化是另一回事。
+- <strong>e_score_correction_bias</strong> 注册了但当前是全零 buffer（noaux_tc 的偏置在训练时更新，推理 checkpoint 里可能已固化为零或被吸收）。
+- <strong>routed_scaling_factor=2.5</strong>：top-k 归一化后权重和为 1，乘 2.5 补偿"只选 8/256 专家"导致的激活幅度下降（否则输出方差比 dense 小）。
+- <strong>n_group=1</strong>：当前配置没有启用组级路由，直接全局 top-8。代码保留了组逻辑（:490）但 <code>topk_group=1</code> 使其退化。</p>
+<p><strong>专家结构</strong>（:514）——权重打包成 3D 张量：
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="bp">self</span><span class="o">.</span><span class="n">gate_up_proj</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">(</span><span class="n">empty</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="mi">2048</span><span class="p">,</span> <span class="mi">6144</span><span class="p">))</span>   <span class="c1"># 256 专家，gate+up 打包</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="bp">self</span><span class="o">.</span><span class="n">down_proj</span>    <span class="o">=</span> <span class="n">Parameter</span><span class="p">(</span><span class="n">empty</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">6144</span><span class="p">,</span> <span class="mi">2048</span><span class="p">))</span>
+</code></pre></div>
+每专家参数：<span class="arithmatex">\(2\times2048\times6144 + 6144\times2048 = 37.7\text{M}\)</span>。256 专家 = 9.66B/层 ×75 MoE 层 ≈ 724B；加 3 dense 层、attention、embedding → 总 ~740B。<code>[推导]</code></p>
+<p>专家 forward（:526）是参考循环实现：对每个命中的专家，用 <code>index_add_</code> 把加权结果累加回 token。生产用 grouped GEMM。</p>
+<h3 id="45-dense-3">4.5 Dense 层（前 3 层）<a class="headerlink" href="#45-dense-3" title="Permanent link">&para;</a></h3>
+<p>前 3 层 <code>mlp_layer_types="dense"</code>，用标准 SwiGLU（<code>GlmMoeDsaMLP</code>，:456），<span class="arithmatex">\(d_f=12288\)</span>：
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">down_proj</span><span class="p">(</span><span class="n">act_fn</span><span class="p">(</span><span class="n">gate_proj</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="o">*</span> <span class="n">up_proj</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+</code></pre></div>
+为什么前几层 dense？底层处理局部语法/词法，需要所有 token 走相同的完整变换；MoE 在高层做语义专业化更有效。这是 DeepSeek-V3 起的标准做法。</p>
+<hr />
+<h2 id="5">5. 关键创新深挖<a class="headerlink" href="#5" title="Permanent link">&para;</a></h2>
+<h3 id="51-dsa-vs-mla-vs-gqa">5.1 DSA vs MLA vs GQA：三层正交压缩<a class="headerlink" href="#51-dsa-vs-mla-vs-gqa" title="Permanent link">&para;</a></h3>
+<p>很多人把 MLA 和 DSA 混为一谈，它们其实解决不同瓶颈：</p>
+<table>
+<thead>
+<tr>
+<th>机制</th>
+<th>压缩对象</th>
+<th>手段</th>
+<th>省什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GQA</td>
+<td>KV 头数</td>
+<td>K/V 头少于 Q 头</td>
+<td>KV cache 显存 + 带宽</td>
+</tr>
+<tr>
+<td>MLA</td>
+<td>KV 维度</td>
+<td>K/V 联合低秩投影到 576</td>
+<td>KV cache 显存（与头数解耦）</td>
+</tr>
+<tr>
+<td>DSA</td>
+<td>注意力参与的 token 数</td>
+<td>indexer 选 top-2048</td>
+<td>注意力计算 FLOPs</td>
+</tr>
+</tbody>
+</table>
+<p>三者可以叠加：GLM 同时用 MLA（压 KV 维度）+ DSA（压 token 数）。MLA 让 KV cache 从头数解耦（64 头也只存 576 维），DSA 让计算从 <span class="arithmatex">\(T^2\)</span> 变成 <span class="arithmatex">\(T\cdot\text{topk}\)</span>。IndexShare 再把 indexer 计算省 3/4。</p>
+<h3 id="52-dsa-indexer-mla-qk">5.2 DSA 的 indexer 为什么用独立投影而不直接用 MLA 的 Q/K？<a class="headerlink" href="#52-dsa-indexer-mla-qk" title="Permanent link">&para;</a></h3>
+<p>可以直接用 MLA 的 <span class="arithmatex">\(q,k\)</span> 算相似度选 topk（DeepSeek-V3.2 的 NSA 就是对主 KV 打分）。GLM 用独立 indexer 的原因：
+1. <strong>维度不同</strong>：主注意力头维 256，indexer 用 128，更轻量。
+2. <strong>目标不同</strong>：主注意力要算加权 value；indexer 只做"选不选"的二元决策，可以用 ReLU（不需要 softmax 的概率语义）。
+3. <strong>独立键缓存</strong>：indexer 的 k 只有 128 维单头，缓存极小，可以维护全量历史 K 用于打分（而主注意力靠 topk gather）。
+4. <strong>复用 q_resid</strong>：虽然投影独立，但 q 侧复用 MLA 的 q_a 低秩输出，不算太浪费。</p>
+<h3 id="53-rope-8m-1m">5.3 RoPE θ=8M 与 1M 上下文<a class="headerlink" href="#53-rope-8m-1m" title="Permanent link">&para;</a></h3>
+<p>RoPE 最低频波长约 <span class="arithmatex">\(2\pi\theta\)</span>。<span class="arithmatex">\(\theta=8\text{M}\)</span> 时最低频波长 ≈ 50M token，远大于 1M 上下文——所以即使不用 YaRN，1M 内所有维度的旋转角都在合理范围（不会超过 <span class="arithmatex">\(2\pi\)</span> 太多导致高频维度缠绕）。这和 DSV4 主注意力用 <span class="arithmatex">\(\theta=10^4\)</span>（只管 128 窗口）但压缩注意力另用 <span class="arithmatex">\(\theta=1.6\times10^5\)</span>+YaRN 形成对比：GLM 用一个大 θ 覆盖全长，DSV4 分层处理。</p>
+<hr />
+<h2 id="6">6. 参数量与账本<a class="headerlink" href="#6" title="Permanent link">&para;</a></h2>
+<h3 id="61">6.1 总参数（推导）<a class="headerlink" href="#61" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>组件</th>
+<th>计算</th>
+<th>数值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>embed</td>
+<td><span class="arithmatex">\(154880\times6144\)</span></td>
+<td>0.95B</td>
+</tr>
+<tr>
+<td>lm_head</td>
+<td><span class="arithmatex">\(6144\times154880\)</span>（解绑）</td>
+<td>0.95B</td>
+</tr>
+<tr>
+<td>每层 MLA attention</td>
+<td>q_a:6144×2048 + q_b:2048×16384 + kv_a:6144×576 + kv_b:512×64×448 + o:16384×6144 + indexer 小项</td>
+<td>≈90M</td>
+</tr>
+<tr>
+<td>每层 dense FFN（3 层）</td>
+<td><span class="arithmatex">\(3\times6144\times12288\)</span></td>
+<td>226M ×3 = 0.68B</td>
+</tr>
+<tr>
+<td>每层 MoE（75 层）</td>
+<td>256×37.7M + shared 37.7M + gate</td>
+<td>9.70B ×75 = 727B</td>
+</tr>
+<tr>
+<td>Norm/RoPE 等</td>
+<td>小</td>
+<td>~0.1B</td>
+</tr>
+<tr>
+<td><strong>总计</strong></td>
+<td></td>
+<td><strong>≈730–740B</strong></td>
+</tr>
+</tbody>
+</table>
+<p>激活参数/层（后 75 MoE 层）：attention 90M + 8 路由专家×37.7M + 1 共享专家 37.7M + gate ≈ 430M；3 dense 层 ≈316M。加权平均约 35B/token。<code>[推导]</code>（官方未公布精确激活参数，35B 为估算）</p>
+<h3 id="62-kv-cache">6.2 KV cache<a class="headerlink" href="#62-kv-cache" title="Permanent link">&para;</a></h3>
+<p>每层每 token：MLA 缓存 <span class="arithmatex">\(576\times2=1152\text{B}\)</span> + indexer K 缓存 <span class="arithmatex">\(128\times2=256\text{B}\)</span>（仅 full indexer 层维护，但 shared 层也读同一个 cache）≈1.4KB。78 层 ×1M ≈ <strong>109 GB</strong>（bf16）。DSA 省的是算力不是 KV 显存。<code>[推导]</code></p>
+<h3 id="63-flops1m">6.3 注意力 FLOPs（1M 上下文）<a class="headerlink" href="#63-flops1m" title="Permanent link">&para;</a></h3>
+<p>无 DSA：<span class="arithmatex">\(2T^2 d_{head}h = 2\times10^{12}\times256\times64 \approx 3.3\times10^{16}\)</span> FLOPs/layer。
+DSA top-2048：<span class="arithmatex">\(2T\times2048\times256\times64 \approx 6.7\times10^{13}\)</span> FLOPs/layer，<strong>降 ~490×</strong>。加 IndexShare 后 indexer 成本摊薄，官方报告端到端 FLOPs ↓2.9×。<code>[推导][官方材料]</code></p>
+<hr />
+<h2 id="7-vs">7. 训练 vs 推理<a class="headerlink" href="#7-vs" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>训练代码未发布</strong>。transformers 内建是参考/推理建模，专家用 for-loop + index_add，不是生产 grouped GEMM。</li>
+<li><strong>MTP</strong>：<code>num_nextn_predict_layers=1</code>，权重藏在 <code>model.layers.78</code>（791 个键，含 <code>eh_proj/enorm/hnorm</code> 等），transformers 加载时静默忽略。<code>index_share_for_mtp_iteration=True</code> 表明 MTP 迭代也复用 DSA 索引。实际推测解码由 vLLM/SGLang 实现。<code>[源码事实]</code></li>
+<li><strong>DSA 稀疏 mask</strong>：eager 路径用 scatter 构造 additive mask；真正生产需 <code>flash_mla_with_kvcache</code> kernel 消费 <code>indices</code>（transformers 的 ALL_ATTENTION_FUNCTIONS 接口已预留 <code>indices</code> 参数）。</li>
+<li><strong>router bias</strong>：<code>e_score_correction_bias</code> 存在但恒零，说明 noaux 均衡在训练末期可能已收敛到接近零，或训练脚本另有处理。<code>[源码事实]</code></li>
+<li><strong>量化</strong>：官方权重 283 个 safetensors 分片，bf16；社区有 GGUF/FP8 量化（量化不改架构）。</li>
+</ul>
+<hr />
+<h2 id="8">8. 检查题<a class="headerlink" href="#8" title="Permanent link">&para;</a></h2>
+<ol>
+<li>
+<p><strong>MLA 缓存的 576 维具体是哪两部分？为什么必须拆出 64 维单独缓存，而不是把全部 KV 压到 512？</strong>
+ <br />
+<details><summary>答案</summary>512 维是 $c^{KV}$（位置无关，可低秩吸收），64 维是 $k^{rot}$（要承受 RoPE 旋转）。RoPE 是非线性位置操作，不能被低秩矩阵吸收。如果全压 512 维再对解压后的 K 做 RoPE，就无法利用"把 $W^{UK}$ 吸收进 Q"的推理优化（因为旋转后的 K 不再是 $c^{KV}$ 的固定线性函数）。拆出 64 维单独存、单独旋转、所有头共享，是 MLA 兼顾压缩和位置编码的工程关键。</details>
+</p>
+</li>
+<li>
+<p><strong>shared indexer 层直接复用 full 层的 topk_indices，难道不会因为层间表征不同而选错 token 吗？</strong>
+ <br />
+<details><summary>答案</summary>会有一定误差，但实验表明相邻层的注意力模式高度相关（下层选的相关 token 上层大概率也需要），复用的质量损失可接受，而省掉 3/4 indexer 计算收益巨大。这是工程折中：不是最优选择，而是足够好 + 大幅省算。IndexShare 每 4 层刷新一次，限制了误差累积。</details>
+</p>
+</li>
+<li>
+<p><strong>GLM 的 DSA indexer 打分用 ReLU 而不是 softmax，这和主注意力的 softmax 有何功能区别？为什么 indexer 可以用 ReLU？</strong>
+ <br />
+<details><summary>答案</summary>主注意力 softmax 产生归一化权重用于加权求和 V，权重必须是概率（和为1）。indexer 只做"选哪些 token"的筛选（topk），不需要概率语义；ReLU 让不相关对精确为 0、相关对得正分，天然适合稀疏选择，且省掉 exp 归一化的计算和数值问题。多头加权求和后直接 topk。</details>
+</p>
+</li>
+<li>
+<p><strong>GLM 总参 ~740B 但激活 ~35B。如果用 FP8 权重 + 每 token 激活 8/256 专家，单卡至少需要多少显存存权重？为什么 KV cache 反而可能成为瓶颈？</strong>
+ <br />
+<details><summary>答案</summary>740B ×1B(FP8) ≈ 740GB 权重——单卡放不下，需要多卡张量/专家并行。KV cache 1M 约 109GB(bf16)，即使权重分多卡，KV cache 也需大量显存；DSA 省算力不省 KV，这是长上下文推理的主要显存压力，需要 paged KV + KV 量化。</details>
+</p>
+</li>
+<li>
+<p><strong><code>routed_scaling_factor=2.5</code> 的作用是什么？如果设成 1 会怎样？</strong>
+ <br />
+<details><summary>答案</summary>top-k 归一化后 8 个专家权重和为 1，但每个专家输出的尺度是为"独立贡献"设计的；只取 8/256 并加权平均后，激活幅度比 dense（全量）小。乘 2.5 补偿这个尺度下降，保持 MoE 输出和 dense 输出方差一致。设成 1 会导致残差流里 MoE 分支贡献偏弱、模型需在训练中自行补偿，可能影响收敛。</details>
+</p>
+</li>
+</ol>
+<hr />
+<h2 id="_1">下一步<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<p>GLM 在"每层都是注意力但稀疏化"的路线上做到极致。06 章 Kimi-K3 走得更远：用 <strong>KDA（Kimi Delta Attention）状态机</strong>替代大部分注意力层（根本没有 KV 概念，只有定长递推状态），剩余层用 Gated MLA；并引入 <strong>Latent MoE</strong>（专家在 3584 维而非 7168 维计算）把 896 专家的总参控制在 2.8T；再加 <strong>AttnRes</strong> 跨 12 层块的残差聚合。</p>
+<p>→ <a href="../06_Kimi-K3/">06 · Kimi-K3</a></p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  回到页面顶部
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/freedom-lwx/llm-architecture-handbook" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "navigation.indexes", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.action.edit", "content.action.view"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../javascripts/mathjax.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>

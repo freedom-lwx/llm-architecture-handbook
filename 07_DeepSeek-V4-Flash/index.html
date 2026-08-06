@@ -1,0 +1,2052 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="nanoGPT/MiniMind/Qwen3.6-27B/GLM-5.2/Kimi-K3/DeepSeek-V4-Flash 源码级架构解析">
+      
+      
+        <meta name="author" content="freedom-lwx">
+      
+      
+      
+        <link rel="prev" href="../06_Kimi-K3/">
+      
+      
+        <link rel="next" href="../08_%E6%A8%AA%E5%90%91%E5%AF%B9%E6%AF%94%E4%B8%8E%E6%BC%94%E8%BF%9B/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>07 · DeepSeek-V4-Flash - 大模型架构学习手册</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#07-deepseek-v4-flash-0731mhc-fp4-moe-dspark" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href=".." title="大模型架构学习手册" class="md-header__button md-logo" aria-label="大模型架构学习手册" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            大模型架构学习手册
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              07 · DeepSeek-V4-Flash
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="切换到暗色"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="切换到暗色" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="切换到亮色"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="切换到亮色" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/freedom-lwx/llm-architecture-handbook" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    freedom-lwx/llm-architecture-handbook
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="标签" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  首页
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../00_%E5%AF%BC%E8%AF%BB/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  00 · 导读
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../01_%E5%9F%BA%E7%A1%80%E7%A7%AF%E6%9C%A8/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  01 · 基础积木
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../02_nanoGPT/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  模型逐个讲
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../08_%E6%A8%AA%E5%90%91%E5%AF%B9%E6%AF%94%E4%B8%8E%E6%BC%94%E8%BF%9B/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  08 · 横向对比与演进
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../%E7%BB%93%E6%9E%84%E5%9B%BE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  结构图（交互式）
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="大模型架构学习手册" class="md-nav__button md-logo" aria-label="大模型架构学习手册" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    大模型架构学习手册
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/freedom-lwx/llm-architecture-handbook" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    freedom-lwx/llm-architecture-handbook
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    首页
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../00_%E5%AF%BC%E8%AF%BB/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    00 · 导读
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01_%E5%9F%BA%E7%A1%80%E7%A7%AF%E6%9C%A8/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    01 · 基础积木
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    模型逐个讲
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    模型逐个讲
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02_nanoGPT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    02 · nanoGPT
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03_MiniMind/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    03 · MiniMind
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04_Qwen3.6-27B/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    04 · Qwen3.6-27B
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05_GLM-5.2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    05 · GLM-5.2
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06_Kimi-K3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    06 · Kimi-K3
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    07 · DeepSeek-V4-Flash
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    07 · DeepSeek-V4-Flash
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. 一句话定位
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-configjson-modelargs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. 配置表（config.json + ModelArgs）
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. 数据流总图
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. 逐块解剖
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. 逐块解剖">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-mhc4-block652" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 mHC：4 条残差超连接（Block，:652）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-kv-mla-o-attention442" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 注意力：单 KV 头 MLA + 分组 O 投影（Attention，:442）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-compressor285" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 Compressor（压缩注意力，:285）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-indexer386-ratio4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.4 Indexer（:386，仅 ratio=4 层）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#45-moefp4-hash-gate-551-expert-592-moe-614" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.5 MoE：FP4 专家 + hash 路由（Gate :551, Expert :592, MoE :614）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#46-dspark-745870" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.6 DSpark 推测解码（:745–870）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#47-gumbel-max922" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.7 采样：Gumbel-max（:922）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. 关键创新深挖
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. 关键创新深挖">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-kv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 三层 KV 压缩的协同
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-3-hash" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 为什么前 3 层用 hash 路由？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-fp4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 FP4 专家的全链路量化
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. 参数量与账本
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. 参数量与账本">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 总参数（推导）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-kv-cache" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 KV cache（极小）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-flops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.3 注意力 FLOPs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-vs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. 训练 vs 推理
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. 检查题
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        下一步
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08_%E6%A8%AA%E5%90%91%E5%AF%B9%E6%AF%94%E4%B8%8E%E6%BC%94%E8%BF%9B/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    08 · 横向对比与演进
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E7%BB%93%E6%9E%84%E5%9B%BE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    结构图（交互式）
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. 一句话定位
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-configjson-modelargs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. 配置表（config.json + ModelArgs）
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. 数据流总图
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. 逐块解剖
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. 逐块解剖">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-mhc4-block652" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 mHC：4 条残差超连接（Block，:652）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-kv-mla-o-attention442" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 注意力：单 KV 头 MLA + 分组 O 投影（Attention，:442）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-compressor285" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 Compressor（压缩注意力，:285）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-indexer386-ratio4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.4 Indexer（:386，仅 ratio=4 层）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#45-moefp4-hash-gate-551-expert-592-moe-614" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.5 MoE：FP4 专家 + hash 路由（Gate :551, Expert :592, MoE :614）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#46-dspark-745870" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.6 DSpark 推测解码（:745–870）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#47-gumbel-max922" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.7 采样：Gumbel-max（:922）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. 关键创新深挖
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. 关键创新深挖">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-kv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 三层 KV 压缩的协同
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-3-hash" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 为什么前 3 层用 hash 路由？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-fp4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 FP4 专家的全链路量化
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. 参数量与账本
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. 参数量与账本">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 总参数（推导）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-kv-cache" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 KV cache（极小）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-flops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.3 注意力 FLOPs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-vs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. 训练 vs 推理
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. 检查题
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        下一步
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/freedom-lwx/llm-architecture-handbook/edit/master/docs/07_DeepSeek-V4-Flash.md" title="编辑此页" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+    
+      
+    
+    <a href="https://github.com/freedom-lwx/llm-architecture-handbook/raw/master/docs/07_DeepSeek-V4-Flash.md" title="查看本页的源代码" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"/></svg>
+    </a>
+  
+
+
+<h1 id="07-deepseek-v4-flash-0731mhc-fp4-moe-dspark">07 · DeepSeek-V4-Flash-0731：mHC 超连接 + 压缩注意力 + FP4 MoE + DSpark<a class="headerlink" href="#07-deepseek-v4-flash-0731mhc-fp4-moe-dspark" title="Permanent link">&para;</a></h1>
+<h2 id="1">1. 一句话定位<a class="headerlink" href="#1" title="Permanent link">&para;</a></h2>
+<p>DeepSeek-V4-Flash 是 DeepSeek-V3.2 稀疏注意力路线的继续，也是六个模型里工程最激进的：它用 <strong>mHC（multi-flow Hyper-Connections）</strong> 同时维护 4 条残差流并用 Sinkhorn 双随机矩阵混合；注意力是 <strong>单 KV 头 MLA + 128 滑窗 + 压缩注意力</strong>（远段 KV 每 4 或 128 个 token 软池化成一个"压缩条目"，再用 indexer 选 top-512）；MoE 用 <strong>256 个 FP4 专家 + 前 3 层 hash 路由</strong>；并带一个代码完整但<strong>未接入生成循环</strong>的 <strong>DSpark 推测解码</strong>草稿模型。它的核心命题是：在 1M 上下文下，同时把 KV 显存、注意力计算、权重显存、生成延迟全部压到极致。</p>
+<blockquote>
+<p>源码：HF <code>deepseek-ai/DeepSeek-V4-Flash-0731/inference/</code>（<code>model.py</code> 961 行 + <code>kernel.py</code> 536 行 tilelang）。这是官方<strong>自研推理参考实现</strong>（不是 transformers 内建，虽然 transformers 也有 deepseek_v4 模块）。revision <code>7872f01b</code>。本章行号对应 <code>inference/model.py</code>。<code>[源码事实][配置值]</code></p>
+</blockquote>
+<hr />
+<h2 id="2-configjson-modelargs">2. 配置表（config.json + ModelArgs）<a class="headerlink" href="#2-configjson-modelargs" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>值</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>hidden_size</code> / <code>dim</code></td>
+<td>4096</td>
+<td><span class="arithmatex">\(d\)</span>（比 GLM/Kimi 小）</td>
+</tr>
+<tr>
+<td><code>num_hidden_layers</code> / <code>n_layers</code></td>
+<td>43</td>
+<td><span class="arithmatex">\(L\)</span></td>
+</tr>
+<tr>
+<td><code>vocab_size</code></td>
+<td>129280</td>
+<td><span class="arithmatex">\(V\)</span></td>
+</tr>
+<tr>
+<td><code>num_attention_heads</code> / <code>n_heads</code></td>
+<td>64</td>
+<td>Q 头数</td>
+</tr>
+<tr>
+<td><code>num_key_value_heads</code></td>
+<td>1</td>
+<td>★ 单 KV 头（MQA 式 MLA）</td>
+</tr>
+<tr>
+<td><code>head_dim</code></td>
+<td>512</td>
+<td>大头维</td>
+</tr>
+<tr>
+<td><code>qk_rope_head_dim</code> / <code>rope_head_dim</code></td>
+<td>64</td>
+<td>旋转维</td>
+</tr>
+<tr>
+<td><code>q_lora_rank</code></td>
+<td>1024</td>
+<td>Q 低秩</td>
+</tr>
+<tr>
+<td><code>o_lora_rank</code></td>
+<td>1024</td>
+<td>输出低秩（DSV4 独有分组 O 投影）</td>
+</tr>
+<tr>
+<td><code>o_groups</code></td>
+<td>8</td>
+<td>输出分组数</td>
+</tr>
+<tr>
+<td><code>sliding_window</code> / <code>window_size</code></td>
+<td>128</td>
+<td>滑窗大小</td>
+</tr>
+<tr>
+<td><code>compress_ratios</code></td>
+<td>[0,0,4,128,4,128,...] 共 43</td>
+<td>每层压缩率（见 4.3）</td>
+</tr>
+<tr>
+<td><code>index_topk</code></td>
+<td>512</td>
+<td>压缩注意力选 512 条目</td>
+</tr>
+<tr>
+<td><code>index_n_heads/index_head_dim</code></td>
+<td>64 / 128</td>
+<td>indexer</td>
+</tr>
+<tr>
+<td><code>compress_rope_theta</code></td>
+<td>160000</td>
+<td>压缩位置的 RoPE θ</td>
+</tr>
+<tr>
+<td><code>rope_theta</code></td>
+<td>10000</td>
+<td>滑窗 RoPE θ</td>
+</tr>
+<tr>
+<td><code>rope_scaling</code></td>
+<td>YaRN factor=16, 65536→1M</td>
+<td>外推</td>
+</tr>
+<tr>
+<td><strong>mHC</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>hc_mult</code></td>
+<td>4</td>
+<td>4 条残差流</td>
+</tr>
+<tr>
+<td><code>hc_sinkhorn_iters</code></td>
+<td>20</td>
+<td>Sinkhorn 迭代</td>
+</tr>
+<tr>
+<td><code>hc_eps</code></td>
+<td>1e-6</td>
+<td></td>
+</tr>
+<tr>
+<td><strong>MoE</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>n_routed_experts</code></td>
+<td>256</td>
+<td></td>
+</tr>
+<tr>
+<td><code>n_shared_experts</code></td>
+<td>1</td>
+<td></td>
+</tr>
+<tr>
+<td><code>n_activated_experts</code> / <code>num_experts_per_tok</code></td>
+<td>6</td>
+<td>top-6</td>
+</tr>
+<tr>
+<td><code>moe_intermediate_size</code> / <code>moe_inter_dim</code></td>
+<td>2048</td>
+<td></td>
+</tr>
+<tr>
+<td><code>expert_dtype</code></td>
+<td>fp4 (e2m1fn_x2)</td>
+<td>★ FP4 专家</td>
+</tr>
+<tr>
+<td><code>n_hash_layers</code> / <code>num_hash_layers</code></td>
+<td>3</td>
+<td>前 3 层 hash 路由</td>
+</tr>
+<tr>
+<td><code>scoring_func</code> / <code>score_func</code></td>
+<td>sqrtsoftplus</td>
+<td><span class="arithmatex">\(\sqrt{\text{softplus}(s)}\)</span></td>
+</tr>
+<tr>
+<td><code>routed_scaling_factor</code> / <code>route_scale</code></td>
+<td>1.5</td>
+<td></td>
+</tr>
+<tr>
+<td><code>swiglu_limit</code></td>
+<td>10.0</td>
+<td>SwiGLU clamp</td>
+</tr>
+<tr>
+<td><code>topk_method</code></td>
+<td>noaux_tc</td>
+<td>bias 均衡</td>
+</tr>
+<tr>
+<td><strong>量化</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>quantization_config.fmt</code></td>
+<td>e4m3 (FP8)</td>
+<td>非专家权重</td>
+</tr>
+<tr>
+<td>scale</td>
+<td>ue8m0, block 128×128</td>
+<td>microscaling</td>
+</tr>
+<tr>
+<td><strong>DSpark</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>num_nextn_predict_layers</code></td>
+<td>1</td>
+<td>（实际 3 个 mtp block）</td>
+</tr>
+<tr>
+<td><code>dspark_block_size</code></td>
+<td>5</td>
+<td>草稿块大小</td>
+</tr>
+<tr>
+<td><code>dspark_target_layer_ids</code></td>
+<td>[40,41,42]</td>
+<td>取主模型哪几层 hidden</td>
+</tr>
+<tr>
+<td><code>dspark_noise_token_id</code></td>
+<td>128799</td>
+<td>草稿噪声占位</td>
+</tr>
+<tr>
+<td><code>dspark_markov_rank</code></td>
+<td>256</td>
+<td>Markov 头秩</td>
+</tr>
+<tr>
+<td><code>max_position_embeddings</code></td>
+<td>1048576</td>
+<td>1M</td>
+</tr>
+</tbody>
+</table>
+<p><code>[配置值]</code></p>
+<p><strong>compress_ratios 模式</strong>（43 层）：层 0,1 = 0（纯滑窗 SW）；从层 2 起 4,128 交替到层 41；层 42 = 0。即：
+- ratio=0：纯 128 滑窗（层 0,1,42）
+- ratio=4：CSA（Compressed Sparse Attention，每 4 token 压缩，带 indexer top512）
+- ratio=128：HCA（High Compressed Attention，每 128 token 压缩，无 indexer，取全部压缩条目）</p>
+<p>约 21 个 ratio=4 层 + 19 个 ratio=128 层 + 3 个纯滑窗。</p>
+<hr />
+<h2 id="3">3. 数据流总图<a class="headerlink" href="#3" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>input_ids (B,T)
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  │  ParallelEmbedding (129280→4096)
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  │  h.unsqueeze(2).repeat(1,1,hc_mult=4,1)   → (B,T,4,4096)  ★ 扩成 4 条流
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>  ▼
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>┌──────────────────────────────────────────────────────────────────────┐
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>│ Block ×43:                                                           │
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>│                                                                      │
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│  ── 注意力站点 ──                                                     │
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>│  residual = x (4 流)                                                 │
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│  x, post, comb = hc_pre(x, hc_attn_fn,...)   4 流→1 流 (Sinkhorn)    │
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>│  x = attn_norm(x)                                                    │
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>│  x = Attention(x, start_pos)                                         │
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>│  x = hc_post(x, residual, post, comb)       1 流→4 流                │
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>│                                                                      │
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>│  ── FFN 站点 ──                                                      │
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>│  residual = x                                                        │
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>│  x, post, comb = hc_pre(x, hc_ffn_fn,...)                            │
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>│  x = ffn_norm(x)                                                     │
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>│  x = MoE(x, input_ids)                      FP4 256专家/hash路由     │
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>│  x = hc_post(x, residual, post, comb)                                │
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>│                                                                      │
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>│  Attention 内部:                                                     │
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>│   q: wq_a(4096→1024)→q_norm→wq_b(1024→64×512)→RMS归一→RoPE(末64)    │
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>│   kv: wkv(4096→512) 单头→kv_norm→RoPE→act_quant(FP8非rope部分)       │
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>│   win topk: 最近 128 个 key                                          │
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>│   if compress_ratio:                                                 │
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>│      Compressor: 每 ratio 个 token 软池化→ kv_state → 写压缩 cache   │
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>│      if ratio==4: Indexer 选 top-512 压缩条目                        │
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>│   sparse_attn(q, [win_kv; compressed_kv], attn_sink, topk_idxs)      │
+<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>│   逆 RoPE → wo_a(分组低秩)→wo_b → 4096                               │
+<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>└──────────────────────────────────────────────────────────────────────┘
+<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>  │  hc_head（4流→1流）→ norm
+<a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>  ▼
+<a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a>ParallelHead (4096→129280) → logits → sample
+<a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a>  │
+<a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a>  └─ 若调 forward_spec: DSpark 草稿（但 generate.py 默认不调）
+</code></pre></div>
+<hr />
+<h2 id="4">4. 逐块解剖<a class="headerlink" href="#4" title="Permanent link">&para;</a></h2>
+<h3 id="41-mhc4-block652">4.1 mHC：4 条残差超连接（Block，:652）<a class="headerlink" href="#41-mhc4-block652" title="Permanent link">&para;</a></h3>
+<p>普通残差是单条流 <span class="arithmatex">\(x_{\ell+1}=x_\ell+\text{sub}(x_\ell)\)</span>。mHC 同时维护 <code>hc_mult=4</code> 条流 <span class="arithmatex">\(x\in\mathbb{R}^{B\times T\times4\times d}\)</span>，在每个子层前后用学习的权重折叠/展开。</p>
+<p><strong>hc_pre（折叠，4→1）</strong>（:684）：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">hc_pre</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">hc_fn</span><span class="p">,</span> <span class="n">hc_scale</span><span class="p">,</span> <span class="n">hc_base</span><span class="p">):</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="c1"># x: (b,s,4,d), hc_fn: (mix_hc, 4*d)</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>                       <span class="c1"># (b,s,16384)</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">rsqrt</span> <span class="o">=</span> <span class="n">rsqrt</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">square</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">+</span> <span class="n">eps</span><span class="p">)</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">mixes</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">linear</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">hc_fn</span><span class="p">)</span> <span class="o">*</span> <span class="n">rsqrt</span>            <span class="c1"># (b,s,mix_hc=24)</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">pre</span><span class="p">,</span> <span class="n">post</span><span class="p">,</span> <span class="n">comb</span> <span class="o">=</span> <span class="n">hc_split_sinkhorn</span><span class="p">(</span><span class="n">mixes</span><span class="p">,</span> <span class="n">hc_scale</span><span class="p">,</span> <span class="n">hc_base</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">iters</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">eps</span><span class="p">)</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="n">y</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">pre</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">x</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">shape</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>   <span class="c1"># (b,s,d) 加权求和</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="k">return</span> <span class="n">y</span><span class="p">,</span> <span class="n">post</span><span class="p">,</span> <span class="n">comb</span>
+</code></pre></div>
+<p><code>mix_hc = (2+hc_mult)*hc_mult = 24</code>：24 个混合系数，经 Sinkhorn 归一化产生三组权重：
+- <code>pre</code>：形状 <code>(b,s,4)</code>，折叠权重——把 4 条流加权求和成 1 条送进子层。
+- <code>post</code>：<code>(b,s,4)</code>，展开权重——把子层输出分发回 4 条流。
+- <code>comb</code>：<code>(b,s,4,4)</code>，组合矩阵——4 条流之间的两两混合。</p>
+<p><strong>Sinkhorn 的作用</strong>：把原始 mixes 变成<strong>双随机矩阵</strong>（行列和均为 1），迭代 20 次：反复行归一化、列归一化。这保证混合是"非扩张"的（权重非负、和为 1），训练稳定——4 条流不会因为反复混合而指数放大或坍缩。<code>pre</code>/<code>post</code> 用 sigmoid+eps，<code>comb</code> 用 Sinkhorn 双随机。</p>
+<p><strong>hc_post（展开，1→4）</strong>（:690）：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">hc_post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">residual</span><span class="p">,</span> <span class="n">post</span><span class="p">,</span> <span class="n">comb</span><span class="p">):</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="c1"># x: (b,s,d) 子层输出, residual: (b,s,4,d)</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">y</span> <span class="o">=</span> <span class="n">post</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">x</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="nb">sum</span><span class="p">(</span><span class="n">comb</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">residual</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="k">return</span> <span class="n">y</span>   <span class="c1"># (b,s,4,d)</span>
+</code></pre></div>
+<p>每条新流 = post 权重 × 子层输出 + comb 权重 × 旧 4 条流的混合。即每条流既接收子层输出，也和其他 3 条流做组合。</p>
+<p><strong>为什么是 4 条流？</strong> 这是 Hyper-Connections（ETMultimedia，2024）的思路：多条残差流给网络更多"跳连路径"，梯度可以沿不同流回传，缓解深层退化；子层通过可学习权重决定从哪条流读、写回哪条流。DSV4 把它和 Sinkhorn 双随机约束结合保证稳定。<code>hc_attn_fn/hc_ffn_fn</code> 各有一套独立的混合参数（注意力站点和 FFN 站点的流模式不同）。</p>
+<h3 id="42-kv-mla-o-attention442">4.2 注意力：单 KV 头 MLA + 分组 O 投影（Attention，:442）<a class="headerlink" href="#42-kv-mla-o-attention442" title="Permanent link">&para;</a></h3>
+<p>DSV4 的 MLA 比 GLM/Kimi 更激进：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="bp">self</span><span class="o">.</span><span class="n">wq_a</span> <span class="o">=</span> <span class="n">Linear</span><span class="p">(</span><span class="mi">4096</span><span class="p">,</span> <span class="mi">1024</span><span class="p">)</span>              <span class="c1"># Q 低秩</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="bp">self</span><span class="o">.</span><span class="n">q_norm</span> <span class="o">=</span> <span class="n">RMSNorm</span><span class="p">(</span><span class="mi">1024</span><span class="p">)</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="bp">self</span><span class="o">.</span><span class="n">wq_b</span> <span class="o">=</span> <span class="n">ColumnParallelLinear</span><span class="p">(</span><span class="mi">1024</span><span class="p">,</span> <span class="mi">64</span><span class="o">*</span><span class="mi">512</span><span class="p">)</span>   <span class="c1"># 上投 64 头×512</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="bp">self</span><span class="o">.</span><span class="n">wkv</span> <span class="o">=</span> <span class="n">Linear</span><span class="p">(</span><span class="mi">4096</span><span class="p">,</span> <span class="mi">512</span><span class="p">)</span>                <span class="c1"># ★ K/V 合一个投影，单头!</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="bp">self</span><span class="o">.</span><span class="n">kv_norm</span> <span class="o">=</span> <span class="n">RMSNorm</span><span class="p">(</span><span class="mi">512</span><span class="p">)</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="bp">self</span><span class="o">.</span><span class="n">wo_a</span> <span class="o">=</span> <span class="n">ColumnParallelLinear</span><span class="p">(</span><span class="mi">64</span><span class="o">*</span><span class="mi">512</span><span class="o">//</span><span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="o">*</span><span class="mi">1024</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">bf16</span><span class="p">)</span>  <span class="c1"># 分组低秩 O</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="bp">self</span><span class="o">.</span><span class="n">wo_b</span> <span class="o">=</span> <span class="n">RowParallelLinear</span><span class="p">(</span><span class="mi">8</span><span class="o">*</span><span class="mi">1024</span><span class="p">,</span> <span class="mi">4096</span><span class="p">)</span>
+</code></pre></div>
+<p>forward（:490）：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">qr</span> <span class="o">=</span> <span class="n">q</span> <span class="o">=</span> <span class="n">q_norm</span><span class="p">(</span><span class="n">wq_a</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>                    <span class="c1"># (B,S,1024)</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">q</span> <span class="o">=</span> <span class="n">wq_b</span><span class="p">(</span><span class="n">q</span><span class="p">)</span><span class="o">.</span><span class="n">unflatten</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,(</span><span class="mi">64</span><span class="p">,</span><span class="mi">512</span><span class="p">))</span>          <span class="c1"># (B,S,64,512)</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">q</span> <span class="o">*=</span> <span class="n">rsqrt</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">square</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">+</span> <span class="n">eps</span><span class="p">)</span>   <span class="c1"># Q RMS 归一化 (QK-norm)</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">apply_rotary_emb</span><span class="p">(</span><span class="n">q</span><span class="p">[</span><span class="o">...</span><span class="p">,</span><span class="o">-</span><span class="mi">64</span><span class="p">:],</span> <span class="n">freqs_cis</span><span class="p">)</span>     <span class="c1"># 只旋最后 64 维</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="n">kv</span> <span class="o">=</span> <span class="n">wkv</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>                                 <span class="c1"># (B,S,512) 单头!</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="n">kv</span> <span class="o">=</span> <span class="n">kv_norm</span><span class="p">(</span><span class="n">kv</span><span class="p">)</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="n">apply_rotary_emb</span><span class="p">(</span><span class="n">kv</span><span class="p">[</span><span class="o">...</span><span class="p">,</span><span class="o">-</span><span class="mi">64</span><span class="p">:],</span> <span class="n">freqs_cis</span><span class="p">)</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="n">act_quant</span><span class="p">(</span><span class="n">kv</span><span class="p">[</span><span class="o">...</span><span class="p">,:</span><span class="o">-</span><span class="mi">64</span><span class="p">],</span> <span class="mi">64</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>            <span class="c1"># 非 rope 部分 FP8 量化 (QAT 模拟)</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="n">topk_idxs</span> <span class="o">=</span> <span class="n">get_window_topk_idxs</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>  <span class="c1"># 最近 128 个位置</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="k">if</span> <span class="n">compress_ratio</span><span class="p">:</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>    <span class="k">if</span> <span class="n">indexer</span><span class="p">:</span> <span class="n">compress_topk</span> <span class="o">=</span> <span class="n">indexer</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>   <span class="c1"># ratio=4: 选 top512 压缩条目</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>    <span class="k">else</span><span class="p">:</span> <span class="n">compress_topk</span> <span class="o">=</span> <span class="n">get_compress_topk_idxs</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>  <span class="c1"># ratio=128: 全取</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>    <span class="n">topk_idxs</span> <span class="o">=</span> <span class="n">cat</span><span class="p">([</span><span class="n">topk_idxs</span><span class="p">,</span> <span class="n">compress_topk</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="c1"># prefill: 写 window kv cache; 压缩</span>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="c1"># decode: 写环形缓冲 kv_cache[:, start_pos%128]</span>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a><span class="n">o</span> <span class="o">=</span> <span class="n">sparse_attn</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">kv</span><span class="p">,</span> <span class="n">attn_sink</span><span class="p">,</span> <span class="n">topk_idxs</span><span class="p">,</span> <span class="mi">512</span><span class="o">**-</span><span class="mf">0.5</span><span class="p">)</span>
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a><span class="n">apply_rotary_emb</span><span class="p">(</span><span class="n">o</span><span class="p">[</span><span class="o">...</span><span class="p">,</span><span class="o">-</span><span class="mi">64</span><span class="p">:],</span> <span class="n">freqs_cis</span><span class="p">,</span> <span class="n">inverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>   <span class="c1"># 逆 RoPE</span>
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>
+<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a><span class="n">o</span> <span class="o">=</span> <span class="n">o</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">B</span><span class="p">,</span><span class="n">S</span><span class="p">,</span><span class="mi">8</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>                        <span class="c1"># 8 组</span>
+<a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a><span class="n">o</span> <span class="o">=</span> <span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;bsgd,grd-&gt;bsgr&quot;</span><span class="p">,</span> <span class="n">o</span><span class="p">,</span> <span class="n">wo_a</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">1024</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>  <span class="c1"># 分组低秩</span>
+<a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a><span class="n">x</span> <span class="o">=</span> <span class="n">wo_b</span><span class="p">(</span><span class="n">o</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+</code></pre></div>
+<p>独特设计：
+1. <strong>单 KV 头</strong>（<code>wkv: 4096→512</code>，num_key_value_heads=1）：所有 64 个 Q 头共享同一个 512 维 KV。这是 MQA 与 MLA 的融合——KV 既是低秩（512 维）又是单头。KV cache 只有 <span class="arithmatex">\(512\times2=1024\text{B}\)</span>/token/层，比 GLM 的 1152B 还小。
+2. <strong>attn_sink</strong>：每个头一个可学习的"sink"向量（:462），注意力除了看 topk 的 KV，还看这个固定 sink（类似 StreamingLLM 的 attention sink），吸收无关/背景注意力。
+3. <strong>分组低秩输出</strong>：64 头分成 8 组，每组经 wo_a 投到 1024 维（低秩），再 wo_b 合并回 4096。这是 MLA 在输出侧的对应物——把 O 投影也低秩化。
+4. <strong>Q RMS 归一化</strong>（无参数的 QK-norm）：<code>q *= rsqrt(mean(q²)+eps)</code>，和 MiniMind 的 q_norm 同源但无可学习权重。
+5. <strong>FP8 模拟非 rope 部分</strong>：<code>act_quant(kv[...,:-64])</code> 对 KV 的非位置维做 FP8 量化（QAT，量化感知训练），rope 的 64 维保持 bf16 保位置精度。
+6. <strong>逆 RoPE</strong>：注意力输出后对末 64 维做<strong>逆旋转</strong>再投影——这让 O 投影看到的是"去位置"的表示，是个少见的工程细节。</p>
+<h3 id="43-compressor285">4.3 Compressor（压缩注意力，:285）<a class="headerlink" href="#43-compressor285" title="Permanent link">&para;</a></h3>
+<p>长上下文下，滑窗 128 只能看近段。Compressor 把远段 KV <strong>软池化</strong>成压缩条目：每 <code>compress_ratio</code> 个 token 压成 1 个。</p>
+<p>forward prefill（:322）核心：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">kv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wkv</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>                    <span class="c1"># (B,S,coff*512) coff=2 if overlap else 1</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">score</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wgate</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>               <span class="c1"># 软池化权重</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="c1"># 每 ratio 个一组</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="n">kv</span> <span class="o">=</span> <span class="n">kv</span><span class="o">.</span><span class="n">unflatten</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">ratio</span><span class="p">))</span>           <span class="c1"># (B, S/ratio, ratio, D)</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="n">score</span> <span class="o">=</span> <span class="n">score</span><span class="o">.</span><span class="n">unflatten</span><span class="p">(</span><span class="mi">1</span><span class="p">,(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">ratio</span><span class="p">))</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">ape</span>   <span class="c1"># + 绝对位置嵌入</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="k">if</span> <span class="n">overlap</span><span class="p">:</span> <span class="n">kv</span><span class="p">,</span><span class="n">score</span> <span class="o">=</span> <span class="n">overlap_transform</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>       <span class="c1"># ratio=4: 重叠窗口</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="n">kv</span> <span class="o">=</span> <span class="p">(</span><span class="n">kv</span> <span class="o">*</span> <span class="n">score</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># 加权求和→压缩条目 (B,S/ratio,D)</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="n">kv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">kv</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="p">))</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="n">apply_rotary_emb</span><span class="p">(</span><span class="n">kv</span><span class="p">[</span><span class="o">...</span><span class="p">,</span><span class="o">-</span><span class="mi">64</span><span class="p">:],</span> <span class="n">compress_freqs_cis</span><span class="p">)</span>   <span class="c1"># 压缩位置用独立 θ=160000</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="n">act_quant</span><span class="p">(</span><span class="n">kv</span><span class="p">[</span><span class="o">...</span><span class="p">,:</span><span class="o">-</span><span class="mi">64</span><span class="p">],</span> <span class="mi">64</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>            <span class="c1"># FP8</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="bp">self</span><span class="o">.</span><span class="n">kv_cache</span><span class="p">[:</span><span class="n">bsz</span><span class="p">,:</span><span class="n">S</span><span class="o">//</span><span class="n">ratio</span><span class="p">]</span> <span class="o">=</span> <span class="n">kv</span>           <span class="c1"># 写压缩 cache</span>
+</code></pre></div>
+<p>关键点：
+- <strong>软池化不是平均池化</strong>：每 <code>ratio</code> 个 token 学一个 softmax 权重（<code>wgate</code>）+ 可学习绝对位置嵌入 <code>ape</code>，加权求和。
+- <strong>ratio=4 用重叠窗口</strong>（<code>overlap=True, coff=2</code>）：压缩条目有重叠，边界更平滑；ratio=128 不重叠。
+- <strong>压缩条目用独立 RoPE θ=160000 + YaRN</strong>：因为第 <span class="arithmatex">\(i\)</span> 个压缩条目代表位置 <span class="arithmatex">\(i\cdot\text{ratio}\)</span>，旋转角要放大 ratio 倍，且要用更大 θ 支持压缩后的超长"有效位置"。
+- <strong>decode 增量压缩</strong>：维护 <code>kv_state/score_state</code> 环形缓冲，攒够 ratio 个新 token 压缩成一个条目（:358）。
+- 压缩后 KV cache 大小 = window(128) + max_seq_len/ratio。ratio=128 时 1M 上下文只有 ~7800 压缩条目，极大节省。</p>
+<h3 id="44-indexer386-ratio4">4.4 Indexer（:386，仅 ratio=4 层）<a class="headerlink" href="#44-indexer386-ratio4" title="Permanent link">&para;</a></h3>
+<p>ratio=4 时压缩条目数仍有 S/4=250K（1M 时），还是太多。Indexer 给每个 query 选最相关的 top-512 个压缩条目：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">q</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wq_b</span><span class="p">(</span><span class="n">qr</span><span class="p">)</span><span class="o">.</span><span class="n">unflatten</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,(</span><span class="mi">64</span><span class="p">,</span><span class="mi">128</span><span class="p">))</span>     <span class="c1"># 用 qr (MLA 的 q_a 输出), 64头×128</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">apply_rotary_emb</span><span class="p">(</span><span class="n">q</span><span class="p">[</span><span class="o">...</span><span class="p">,</span><span class="o">-</span><span class="mi">64</span><span class="p">:],</span> <span class="n">freqs</span><span class="p">)</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">q</span> <span class="o">=</span> <span class="n">rotate_activation</span><span class="p">(</span><span class="n">q</span><span class="p">);</span> <span class="n">fp4_act_quant</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>    <span class="c1"># Hadamard 旋转 + FP4 模拟</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="bp">self</span><span class="o">.</span><span class="n">compressor</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">start_pos</span><span class="p">)</span>                 <span class="c1"># 确保压缩 cache 就绪</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="n">weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights_proj</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">128</span><span class="o">**-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="mi">64</span><span class="o">**-</span><span class="mf">0.5</span><span class="p">)</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="n">index_score</span> <span class="o">=</span> <span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;bshd,btd-&gt;bsht&quot;</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kv_cache</span><span class="p">[:</span><span class="n">bsz</span><span class="p">,:</span><span class="n">end</span><span class="o">//</span><span class="mi">4</span><span class="p">])</span>  <span class="c1"># 和压缩 KV 打分</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="n">index_score</span> <span class="o">=</span> <span class="p">(</span><span class="n">index_score</span><span class="o">.</span><span class="n">relu_</span><span class="p">()</span> <span class="o">*</span> <span class="n">weights</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># 多头加权</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="n">topk_idxs</span> <span class="o">=</span> <span class="n">index_score</span><span class="o">.</span><span class="n">topk</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="mi">512</span><span class="p">,</span> <span class="n">end</span><span class="o">//</span><span class="mi">4</span><span class="p">),</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+</code></pre></div>
+<p>和 GLM DSA indexer 思路一致（ReLU 打分 + 多头加权 + topk），但 DSV4 的 indexer 打的是<strong>压缩条目</strong>而非原始 token，且用 FP4 模拟 Q/K（极致量化）。ratio=128 层不设 indexer（压缩条目本身少，全取）。</p>
+<h3 id="45-moefp4-hash-gate-551-expert-592-moe-614">4.5 MoE：FP4 专家 + hash 路由（Gate :551, Expert :592, MoE :614）<a class="headerlink" href="#45-moefp4-hash-gate-551-expert-592-moe-614" title="Permanent link">&para;</a></h3>
+<p><strong>Gate 两种模式</strong>：
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">input_ids</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="n">scores</span> <span class="o">=</span> <span class="n">linear</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">float</span><span class="p">(),</span> <span class="n">weight</span><span class="o">.</span><span class="n">float</span><span class="p">())</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="k">if</span> <span class="n">score_func</span> <span class="o">==</span> <span class="s2">&quot;sqrtsoftplus&quot;</span><span class="p">:</span> <span class="n">scores</span> <span class="o">=</span> <span class="n">softplus</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span><span class="o">.</span><span class="n">sqrt</span><span class="p">()</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    <span class="n">original_scores</span> <span class="o">=</span> <span class="n">scores</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="k">if</span> <span class="n">bias</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span> <span class="n">scores</span> <span class="o">=</span> <span class="n">scores</span> <span class="o">+</span> <span class="n">bias</span>      <span class="c1"># noaux_tc bias</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">hash</span><span class="p">:</span>                                      <span class="c1"># 前 3 层</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>        <span class="n">indices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tid2eid</span><span class="p">[</span><span class="n">input_ids</span><span class="p">]</span>             <span class="c1"># 按 token id 查表!冻结表</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>    <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>        <span class="n">indices</span> <span class="o">=</span> <span class="n">scores</span><span class="o">.</span><span class="n">topk</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>           <span class="c1"># 正常 top-6</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>    <span class="n">weights</span> <span class="o">=</span> <span class="n">original_scores</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">indices</span><span class="p">)</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>    <span class="n">weights</span> <span class="o">/=</span> <span class="n">weights</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>    <span class="n">weights</span> <span class="o">*=</span> <span class="n">route_scale</span>                            <span class="c1"># 1.5</span>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>    <span class="k">return</span> <span class="n">weights</span><span class="p">,</span> <span class="n">indices</span>
+</code></pre></div></p>
+<ul>
+<li><strong>前 3 层 hash 路由</strong>：<code>tid2eid</code> 是一张冻结的 <code>(vocab_size, 6)</code> int32 表，每个 token id 直接映射到 6 个专家，<strong>不看 hidden states</strong>。为什么？底层处理的更多是词法/局部模式，路由主要由 token 身份决定；hash 路由省掉 gate 计算且负载天然均匀（表预先生成平衡）。注意：虽然专家选择是静态的，但打分权重 <code>original_scores</code> 仍然学习。</li>
+<li><strong>sqrtsoftplus 打分</strong>：<span class="arithmatex">\(\sqrt{\text{softplus}(s)}\)</span>——比 sigmoid 更平滑、梯度更友好，是 DSV4 独有选择。</li>
+<li><strong>noaux_tc bias</strong>：<code>bias</code> 可学习，只影响 top-k 选择（加在 scores 上），但加权用 <code>original_scores</code>（不加 bias）——和 GLM 一样的"bias 只影响选择不影响权重"解耦设计。</li>
+</ul>
+<p><strong>Expert FP4</strong>（:592）：
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">expert_dtype</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">float4_e2m1fn_x2</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">expert_dtype</span><span class="o">==</span><span class="s2">&quot;fp4&quot;</span> <span class="k">else</span> <span class="kc">None</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="bp">self</span><span class="o">.</span><span class="n">w1</span> <span class="o">=</span> <span class="n">Linear</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">inter_dim</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">expert_dtype</span><span class="p">)</span>   <span class="c1"># gate</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="bp">self</span><span class="o">.</span><span class="n">w2</span> <span class="o">=</span> <span class="n">Linear</span><span class="p">(</span><span class="n">inter_dim</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">expert_dtype</span><span class="p">)</span>   <span class="c1"># down</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="bp">self</span><span class="o">.</span><span class="n">w3</span> <span class="o">=</span> <span class="n">Linear</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">inter_dim</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">expert_dtype</span><span class="p">)</span>   <span class="c1"># up</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>    <span class="n">gate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w1</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>    <span class="n">up</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w3</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>    <span class="n">up</span> <span class="o">=</span> <span class="n">clamp</span><span class="p">(</span><span class="n">up</span><span class="p">,</span> <span class="o">-</span><span class="n">swiglu_limit</span><span class="p">,</span> <span class="n">swiglu_limit</span><span class="p">)</span>        <span class="c1"># clamp ±10</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>    <span class="n">gate</span> <span class="o">=</span> <span class="n">clamp</span><span class="p">(</span><span class="n">gate</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="n">swiglu_limit</span><span class="p">)</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>    <span class="n">x</span> <span class="o">=</span> <span class="n">silu</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span> <span class="o">*</span> <span class="n">up</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">w2</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="p">))</span>
+</code></pre></div></p>
+<p>FP4（E2M1）只有 16 个可表示值，配 microscaling block scale（每 16 个元素一个 e8m0 scale）。<code>swiglu_limit=10</code> 把激活 clamp 在 [-10,10]，防止 FP4 量化溢出。256 个专家用 FP4 存，权重显存相比 bf16 降到 1/4。非专家权重（attention、shared expert、router）用 FP8（e4m3）。</p>
+<p><strong>MoE forward</strong>（:634）：对每个本地专家，找出路由到它的 token（<code>torch.where(indices==i)</code>），批量计算后累加，最后 all_reduce + 加共享专家。参考实现 for-loop，生产用 tilelang 的 <code>fp4_gemm</code>（<code>kernel.py</code>）。</p>
+<h3 id="46-dspark-745870">4.6 DSpark 推测解码（:745–870）<a class="headerlink" href="#46-dspark-745870" title="Permanent link">&para;</a></h3>
+<p>DSpark 是 DSV4 的草稿模型，代码完整但需要重点说明它的接线状态。</p>
+<p><strong>结构</strong>：3 个 <code>DSparkBlock</code>（存于 <code>mtp.0/1/2</code>），每个是 Block 的子类，用 <code>DSparkAttention</code>（只看主模型 128 滑窗 KV + 自己的草稿 KV）。最后一个 block 带：
+- <code>DSparkMarkovHead</code>：token→256 秩嵌入→token logits，学习一个<strong>二元马尔可夫转移先验</strong> <span class="arithmatex">\(P(t_{i+1}|t_i)\)</span>，加到草稿 logits 上。
+- <code>DSparkConfidenceHead</code>：拼接 hidden 和 markov embed，输出一个标量置信度，决定接不接受草稿。
+- <code>noise_token_id=128799</code>：草稿块里除第一个位置外填噪声占位 token。</p>
+<p><strong>forward_head</strong>（:845）：自回归生成 block_size=5 个草稿 token，每步把 Markov 转移偏置加到 logits，采样，并收集 markov embed 算置信度。</p>
+<p><strong>关键：未接线</strong>。主 <code>Transformer.forward</code>（:893）返回 <code>(output_ids, logits, main_hidden)</code>，但 <code>generate.py</code> 的生成循环<strong>没有调用 <code>forward_spec</code></strong>。<code>forward_spec</code>（:914）虽然实现了草稿生成，但只有 <code>model.py</code> 末尾的 <code>__main__</code> 自测里调用了它。<code>[源码事实]</code> 这意味着：开源参考实现里 DSpark 代码是完整的、权重存在，但没有接进生产生成路径。实际推测解码要靠 vLLM（<code>num_speculative_tokens=7</code>）/SGLang（DSPARK）或用户自己接线。</p>
+<h3 id="47-gumbel-max922">4.7 采样：Gumbel-max（:922）<a class="headerlink" href="#47-gumbel-max922" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">sample</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    <span class="k">if</span> <span class="n">temperature</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span> <span class="k">return</span> <span class="n">logits</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>    <span class="n">probs</span> <span class="o">=</span> <span class="n">softmax</span><span class="p">(</span><span class="n">logits</span><span class="o">/</span><span class="nb">max</span><span class="p">(</span><span class="n">temperature</span><span class="p">,</span><span class="mf">1e-5</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">fp32</span><span class="p">)</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>    <span class="k">return</span> <span class="n">probs</span><span class="o">.</span><span class="n">div_</span><span class="p">(</span><span class="n">empty_like</span><span class="p">(</span><span class="n">probs</span><span class="p">)</span><span class="o">.</span><span class="n">exponential_</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div>
+<p>用 Gumbel-max trick：<span class="arithmatex">\(\arg\max_i(\log p_i - \log(-\log u_i))\)</span> 等价于按 <span class="arithmatex">\(p\)</span> 采样，但避免 <code>torch.multinomial</code> 的 GPU→CPU 同步。这是个推理加速小细节。</p>
+<hr />
+<h2 id="5">5. 关键创新深挖<a class="headerlink" href="#5" title="Permanent link">&para;</a></h2>
+<h3 id="51-kv">5.1 三层 KV 压缩的协同<a class="headerlink" href="#51-kv" title="Permanent link">&para;</a></h3>
+<p>DSV4 的注意力 KV 不是单一压缩，而是三层结构：</p>
+<table>
+<thead>
+<tr>
+<th>层级</th>
+<th>内容</th>
+<th>大小（1M 上下文）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>滑窗</td>
+<td>最近 128 个原始 token KV（单头 512 维）</td>
+<td>固定 128 条</td>
+</tr>
+<tr>
+<td>压缩条目（ratio=4 层）</td>
+<td>每 4 token 软池化，indexer 选 top-512</td>
+<td>~250K 条目，每 query 取 512</td>
+</tr>
+<tr>
+<td>压缩条目（ratio=128 层）</td>
+<td>每 128 token 软池化，全取</td>
+<td>~7800 条目</td>
+</tr>
+<tr>
+<td>attention sink</td>
+<td>每头一个学习向量</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+<p>每层根据自己的 compress_ratio 决定看多少压缩条目。越高层（ratio=128）压缩越狠、看得越远但越粗；越低层（ratio=4/0）看得越近越细。这是一种分层多分辨率注意力——和 GLM 所有层统一 top-2048 原始 token 的 DSA 不同，DSV4 是"分层压缩 + 分层检索"。</p>
+<h3 id="52-3-hash">5.2 为什么前 3 层用 hash 路由？<a class="headerlink" href="#52-3-hash" title="Permanent link">&para;</a></h3>
+<p>三层洞察：
+1. 底层 hidden states 携带的语义信息少，路由决策主要由 token 本身决定（"the" 该去哪些专家几乎固定）。
+2. hash 路由负载绝对均匀（预生成表），不需要 aux loss 或 bias 调节。
+3. 省掉前 3 层 gate 的 top-k 计算（虽然小）。</p>
+<p>高层（语义层）才需要数据相关的动态路由。这是"计算按深度差异化"的设计。</p>
+<h3 id="53-fp4">5.3 FP4 专家的全链路量化<a class="headerlink" href="#53-fp4" title="Permanent link">&para;</a></h3>
+<p>DSV4 不只是存 FP4 权重，而是量化感知训练（QAT）+ 推理模拟全链路：
+- 专家权重 FP4（e2m1fn_x2 + e8m0 block scale）。
+- 专家输入/激活：<code>act_quant</code> FP8 模拟（非 rope 部分）。
+- indexer 的 Q/K：FP4 模拟（<code>fp4_act_quant</code>）。
+- <code>swiglu_limit=10</code> clamp 激活防溢出。
+- <code>convert.py</code> 把 checkpoint 的 FP4 权重转成 FP8 折叠 scale 供推理 kernel 用（<code>MAX_OFFSET_BITS=6</code>）。
+- <code>kernel.py</code> 用 tilelang 写 <code>fp4_gemm</code>，在 H100 上利用 FP4 tensor core。</p>
+<p>这是六个模型里唯一把训练-推理量化做到这个程度的，目标是把 256 专家的权重显存压到能单节点部署。</p>
+<hr />
+<h2 id="6">6. 参数量与账本<a class="headerlink" href="#6" title="Permanent link">&para;</a></h2>
+<h3 id="61">6.1 总参数（推导）<a class="headerlink" href="#61" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>组件</th>
+<th>计算</th>
+<th>数值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>embed</td>
+<td><span class="arithmatex">\(129280\times4096\)</span></td>
+<td>0.53B</td>
+</tr>
+<tr>
+<td>每层 attention</td>
+<td>wq_a 4.2M + wq_b 67M + wkv 2.1M + wo_a/b ~75M ≈148M</td>
+<td>×43 ≈6.4B</td>
+</tr>
+<tr>
+<td>每层 MoE（256 专家 FP4）</td>
+<td>256×3×4096×2048=6.44B + shared 25M + gate</td>
+<td>~6.5B ×40 MoE 层</td>
+</tr>
+<tr>
+<td>前 3 层 dense?</td>
+<td>否，前 3 层也是 256 专家（只是 hash 路由）</td>
+<td>—</td>
+</tr>
+<tr>
+<td>专家总参数</td>
+<td>256×3×4096×2048×40 层</td>
+<td>≈258B（FP4 存储 ~65GB）</td>
+</tr>
+<tr>
+<td>attention+embedding+norm+DSpark</td>
+<td></td>
+<td>~8B</td>
+</tr>
+<tr>
+<td><strong>总计（bf16 等价参数）</strong></td>
+<td></td>
+<td><strong>≈280B</strong></td>
+</tr>
+</tbody>
+</table>
+<p>激活参数/层：attention 148M + 6 专家×25M + 1 共享 25M ≈323M；×43 + embed ≈14B（约 11–14B，官方未公布精确值）。<code>[推导]</code></p>
+<p>注意：282B 是"bf16 等价参数量"；实际 FP4 专家只占 ~65GB 显存，FP8 非专家占 ~16GB，总权重显存 ~80GB 级别，可单 H100/H200 容纳。</p>
+<h3 id="62-kv-cache">6.2 KV cache（极小）<a class="headerlink" href="#62-kv-cache" title="Permanent link">&para;</a></h3>
+<p>单头 MLA：每层每 token 512×2=1024B（window）+ 压缩条目（均摊极小）。43 层 ×1M ≈ <strong>43 GB</strong> bf16（如果全量），但有压缩：
+- 滑窗部分固定：43×128×1024B ≈ 5.6MB
+- 压缩部分：ratio=4 层 ~250K 条×512×2B ≈ 256MB/层 ×21 层 ≈ 5.4GB；ratio=128 层 ~8K 条 ≈ 8MB/层 ×19 层
+- 实际 1M KV 总量约 <strong>6–10 GB</strong> 级别（FP8 量化后更小）。<code>[推导]</code></p>
+<p>这是六个模型里 KV 最省的（单头 + 压缩双管齐下）。</p>
+<h3 id="63-flops">6.3 注意力 FLOPs<a class="headerlink" href="#63-flops" title="Permanent link">&para;</a></h3>
+<p>每 query 注意力：128（window）+ 512（压缩 topk）= 640 个 key，对比全注意力 1M，<strong>降 ~1500×</strong>。indexer 额外成本：对 S/4 压缩条目打分，约 <span class="arithmatex">\(S\times S/4\)</span>——但 indexer 是 64×128 小头且 FP4，远小于主注意力。</p>
+<hr />
+<h2 id="7-vs">7. 训练 vs 推理<a class="headerlink" href="#7-vs" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>训练代码未发布</strong>。开源的是 <code>inference/</code> 参考实现，依赖 <code>tilelang</code>（GPU kernel DSL）写量化 GEMM。</li>
+<li><strong>自研实现 vs transformers</strong>：官方 HF 仓库用 <code>inference/model.py</code>（本章分析对象）；transformers 5.14 也有 <code>deepseek_v4</code> 模块（1525 行），是 HF 的兼容实现，两者结构一致但 kernel 不同。</li>
+<li><strong>DSpark 未接线</strong>（见 4.6）：代码完整但 <code>generate.py</code> 不调 <code>forward_spec</code>。<code>[源码事实]</code></li>
+<li><strong>权重量化</strong>：非专家 FP8（e4m3 + ue8m0 block scale 128×128），专家 FP4（e2m1fn_x2 + e8m0 scale）。需要 H100+ 的 FP8/FP4 tensor core 才能满速。</li>
+<li><strong>张量并行</strong>：<code>ColumnParallelLinear/RowParallelLinear</code> 原生支持 TP；专家按 rank 分片（每 rank 256/world_size 个专家），MoE forward 后 all_reduce。</li>
+<li><strong>DeepSeek-V3.2 仓库</strong>（github）是 DSV3.2 的资料（含 PDF 技术报告讲 NSA/稀疏注意力），DSV4 没有独立 GitHub 仓库，官方代码全在 HF 的 <code>inference/</code>。</li>
+</ul>
+<hr />
+<h2 id="8">8. 检查题<a class="headerlink" href="#8" title="Permanent link">&para;</a></h2>
+<ol>
+<li>
+<p><strong>mHC 维护 4 条残差流。为什么组合矩阵 comb 要用 Sinkhorn 双随机化（行列和都为1），而不是直接用 softmax？</strong>
+ <br />
+<details><summary>答案</summary>4 条流反复经过 Block（43次折叠/展开），如果混合矩阵不是非扩张的，流的范数可能指数增长或坍缩。Sinkhorn 把 comb 约束成双随机矩阵（非负、行列和为1），这是马尔可夫转移矩阵，保证混合不放大范数（谱半径≤1），训练深层稳定。普通 softmax 只保证行和为1（行随机），列方向可能放大。pre/post 用 sigmoid+eps 同理加了下界保证每条流都有贡献。</details>
+</p>
+</li>
+<li>
+<p><strong>DSV4 的 KV 是"单头 512 维"，而 GLM 的 MLA 是"64 头共享 64 维 rope + 512 维低秩解压成 64 头"。两者 KV cache 谁大？这两种设计的本质区别？</strong>
+ <br />
+<details><summary>答案</summary>DSV4 KV cache 更小：512 维/ token vs GLM 576 维（512+64rope），且 DSV4 只有 43 层 vs GLM 78 层。本质区别：GLM 缓存 c_KV(512)，推理时上投影成 64 头的 K/V（计算换显存）；DSV4 直接缓存单头 512 维 KV，64 个 Q 头都和同一个 KV 做注意力（MQA 式），不做上投影。DSV4 更省显存和 KV 计算，但单头 KV 表达力受限，靠 64 个不同 Q + 大 head_dim(512) 补偿。</details>
+</p>
+</li>
+<li>
+<p><strong>Compressor 把 4 个 token 软池化成 1 个时，为什么用 wgate 学权重 + ape 位置嵌入，而不是直接平均？压缩条目为什么要用独立的 θ=160000？</strong>
+ <br />
+<details><summary>答案</summary>平均池化会把 4 个 token 的信息等权混合，丢失重要性差异；学习 softmax 权重让模型决定哪个 token 该被记住。ape（绝对位置嵌入）让压缩条目知道自己代表哪一段。压缩条目第 i 个代表原始位置约 i×ratio，它的 RoPE 旋转角对应位置 i×ratio；如果还用主注意力 θ=10000，压缩后的"有效位置"S/ratio 会超出训练范围。用更大 θ=160000 让压缩条目的频率尺度匹配其代表的原始位置跨度。</details>
+</p>
+</li>
+<li>
+<p><strong>前 3 层 hash 路由的 tid2eid 是冻结表，按 token id 选专家。这和"真正的路由"区别是什么？为什么打分权重 original_scores 仍然要学习？</strong>
+ <br />
+<details><summary>答案</summary>真正的路由根据 hidden states 动态选专家（内容相关）；hash 路由按 token 身份静态选（内容无关），同一个 token 永远去同样 6 个专家。但选中后每个专家的贡献权重 original_scores 仍由 hidden 算出并学习——即"去哪个专家"固定，"听这个专家多少"动态。底层词法模式 token 身份就够决定专家归属，省 gate 计算且负载均匀，但保留加权灵活性。</details>
+</p>
+</li>
+<li>
+<p><strong>DSpark 代码完整但 generate.py 不调用 forward_spec。这说明什么？使用开源权重要做推测解码必须怎么办？</strong>
+ <br />
+<details><summary>答案</summary>说明开源发布的是"算法参考实现 + 权重"，但生产推理路径需要推理引擎（vLLM/SGLang）或用户自己把 forward_spec 接进生成循环：用主模型 hidden 喂 DSpark 生成草稿、主模型验证、confidence head 决定接受/回退。不能直接用官方 generate.py 获得推测解码加速。这是"权重存在 ≠ 功能已接入"的又一案例，和其他模型的 MTP 状态一致。</details>
+</p>
+</li>
+</ol>
+<hr />
+<h2 id="_1">下一步<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<p>六个模型逐个讲完。08 章把它们放回一张图：替换件矩阵（位置编码/注意力/FFN-MoE/残差四维度逐一对比）、参数量与 KV cache 总账本、以及从 GPT-2（2018）到 DSV4（2026）的演进脉络——每一步"解决了上一代的什么瓶颈、又引入了什么新成本"。</p>
+<p>→ <a href="../08_%E6%A8%AA%E5%90%91%E5%AF%B9%E6%AF%94%E4%B8%8E%E6%BC%94%E8%BF%9B/">08 · 横向对比与演进</a></p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  回到页面顶部
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/freedom-lwx/llm-architecture-handbook" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "navigation.indexes", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.action.edit", "content.action.view"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../javascripts/mathjax.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>

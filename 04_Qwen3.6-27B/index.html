@@ -1,0 +1,1823 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="nanoGPT/MiniMind/Qwen3.6-27B/GLM-5.2/Kimi-K3/DeepSeek-V4-Flash 源码级架构解析">
+      
+      
+        <meta name="author" content="freedom-lwx">
+      
+      
+      
+        <link rel="prev" href="../03_MiniMind/">
+      
+      
+        <link rel="next" href="../05_GLM-5.2/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>04 · Qwen3.6-27B - 大模型架构学习手册</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#04-qwen36-27bdense-hybrid" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href=".." title="大模型架构学习手册" class="md-header__button md-logo" aria-label="大模型架构学习手册" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            大模型架构学习手册
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              04 · Qwen3.6-27B
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="切换到暗色"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="切换到暗色" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="切换到亮色"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="切换到亮色" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/freedom-lwx/llm-architecture-handbook" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    freedom-lwx/llm-architecture-handbook
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="标签" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  首页
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../00_%E5%AF%BC%E8%AF%BB/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  00 · 导读
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../01_%E5%9F%BA%E7%A1%80%E7%A7%AF%E6%9C%A8/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  01 · 基础积木
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../02_nanoGPT/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  模型逐个讲
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../08_%E6%A8%AA%E5%90%91%E5%AF%B9%E6%AF%94%E4%B8%8E%E6%BC%94%E8%BF%9B/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  08 · 横向对比与演进
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../%E7%BB%93%E6%9E%84%E5%9B%BE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  结构图（交互式）
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="大模型架构学习手册" class="md-nav__button md-logo" aria-label="大模型架构学习手册" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    大模型架构学习手册
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/freedom-lwx/llm-architecture-handbook" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    freedom-lwx/llm-architecture-handbook
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    首页
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../00_%E5%AF%BC%E8%AF%BB/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    00 · 导读
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01_%E5%9F%BA%E7%A1%80%E7%A7%AF%E6%9C%A8/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    01 · 基础积木
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    模型逐个讲
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    模型逐个讲
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02_nanoGPT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    02 · nanoGPT
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03_MiniMind/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    03 · MiniMind
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    04 · Qwen3.6-27B
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    04 · Qwen3.6-27B
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. 一句话定位
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-text_config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. 配置表（text_config）
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. 数据流总图
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. 逐块解剖
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. 逐块解剖">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-qwen3_5attention649" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 全注意力层（Qwen3_5Attention，:649）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-qwen3_5gateddeltanet374" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 线性注意力层（Qwen3_5GatedDeltaNet，:374）—— 本章核心
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-ffndense-swiglu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 FFN（Dense SwiGLU）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-mrope3d" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.4 mrope（3D 旋转位置编码）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. 关键创新深挖
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. 关键创新深挖">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-3-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 为什么"3 线性 + 1 全注意力"？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-gated-deltanet-vs-mamba-vs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 Gated DeltaNet vs Mamba vs 线性注意力
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-mtp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 MTP 的状态
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. 参数量与账本
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. 参数量与账本">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 总参数（推导）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 激活参数
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-kv-cache" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.3 KV cache 与状态
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-vs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. 训练 vs 推理
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. 检查题
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        下一步
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05_GLM-5.2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    05 · GLM-5.2
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06_Kimi-K3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    06 · Kimi-K3
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07_DeepSeek-V4-Flash/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    07 · DeepSeek-V4-Flash
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08_%E6%A8%AA%E5%90%91%E5%AF%B9%E6%AF%94%E4%B8%8E%E6%BC%94%E8%BF%9B/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    08 · 横向对比与演进
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E7%BB%93%E6%9E%84%E5%9B%BE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    结构图（交互式）
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. 一句话定位
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-text_config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. 配置表（text_config）
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. 数据流总图
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. 逐块解剖
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. 逐块解剖">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-qwen3_5attention649" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 全注意力层（Qwen3_5Attention，:649）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-qwen3_5gateddeltanet374" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 线性注意力层（Qwen3_5GatedDeltaNet，:374）—— 本章核心
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-ffndense-swiglu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 FFN（Dense SwiGLU）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-mrope3d" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.4 mrope（3D 旋转位置编码）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. 关键创新深挖
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. 关键创新深挖">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-3-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 为什么"3 线性 + 1 全注意力"？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-gated-deltanet-vs-mamba-vs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 Gated DeltaNet vs Mamba vs 线性注意力
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-mtp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 MTP 的状态
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. 参数量与账本
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. 参数量与账本">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 总参数（推导）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 激活参数
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-kv-cache" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.3 KV cache 与状态
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-vs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. 训练 vs 推理
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. 检查题
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        下一步
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/freedom-lwx/llm-architecture-handbook/edit/master/docs/04_Qwen3.6-27B.md" title="编辑此页" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+    
+      
+    
+    <a href="https://github.com/freedom-lwx/llm-architecture-handbook/raw/master/docs/04_Qwen3.6-27B.md" title="查看本页的源代码" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"/></svg>
+    </a>
+  
+
+
+<h1 id="04-qwen36-27bdense-hybrid">04 · Qwen3.6-27B：Dense-Hybrid（线性注意力 + 稀疏全注意力）<a class="headerlink" href="#04-qwen36-27bdense-hybrid" title="Permanent link">&para;</a></h1>
+<h2 id="1">1. 一句话定位<a class="headerlink" href="#1" title="Permanent link">&para;</a></h2>
+<p>Qwen3.6-27B 是六个模型里<strong>唯一的 dense（非 MoE）前沿模型</strong>，但它不是传统 dense Transformer：64 层里 48 层用 <strong>GatedDeltaNet</strong>（线性注意力，<span class="arithmatex">\(O(T)\)</span> 定长循环状态），16 层用标准 GQA 全注意力，按"3 线性 + 1 全注意力"循环。它用线性层扛长程记忆、用稀疏的全注意力层做精确检索，从而在 27B 激活参数下支持 262K 原生上下文（可扩 1M）。这是"线性注意力 + 全注意力混合"路线最成熟的开源实现。</p>
+<blockquote>
+<p>源码：transformers 5.14 内建 <code>models/qwen3_5/modeling_qwen3_5.py</code>（2106 行，含视觉）。文本核心在 <code>Qwen3_5GatedDeltaNet</code>（:374）和 <code>Qwen3_5Attention</code>（:649）。config 来自 HF <code>Qwen/Qwen3.6-27B</code>。<code>[源码事实][配置值]</code></p>
+</blockquote>
+<hr />
+<h2 id="2-text_config">2. 配置表（text_config）<a class="headerlink" href="#2-text_config" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>值</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>hidden_size</code></td>
+<td>5120</td>
+<td><span class="arithmatex">\(d\)</span></td>
+</tr>
+<tr>
+<td><code>num_hidden_layers</code></td>
+<td>64</td>
+<td><span class="arithmatex">\(L\)</span></td>
+</tr>
+<tr>
+<td><code>vocab_size</code></td>
+<td>248320</td>
+<td><span class="arithmatex">\(V\)</span></td>
+</tr>
+<tr>
+<td><code>layer_types</code></td>
+<td>64 项，<code>[L,L,L,F]</code> 循环</td>
+<td>48 线性 + 16 全注意力</td>
+</tr>
+<tr>
+<td><code>full_attention_interval</code></td>
+<td>4</td>
+<td>每 4 层一个全注意力（层 3,7,11,...,63）</td>
+</tr>
+<tr>
+<td><strong>全注意力层</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>num_attention_heads</code></td>
+<td>24</td>
+<td><span class="arithmatex">\(h\)</span></td>
+</tr>
+<tr>
+<td><code>num_key_value_heads</code></td>
+<td>4</td>
+<td><span class="arithmatex">\(h_{kv}\)</span>（GQA 6:1）</td>
+</tr>
+<tr>
+<td><code>head_dim</code></td>
+<td>256</td>
+<td><span class="arithmatex">\(d_h\)</span>（注意不是 <span class="arithmatex">\(d/h\)</span>）</td>
+</tr>
+<tr>
+<td><code>attn_output_gate</code></td>
+<td>True</td>
+<td>输出门 sigmoid</td>
+</tr>
+<tr>
+<td><code>partial_rotary_factor</code></td>
+<td>0.25</td>
+<td>只旋转前 64 维</td>
+</tr>
+<tr>
+<td><strong>线性注意力层</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>linear_num_value_heads</code></td>
+<td>48</td>
+<td>V 头数</td>
+</tr>
+<tr>
+<td><code>linear_num_key_heads</code></td>
+<td>16</td>
+<td>K 头数（Q 也 16，再 repeat 到 48）</td>
+</tr>
+<tr>
+<td><code>linear_key_head_dim</code></td>
+<td>128</td>
+<td>K/Q 头维</td>
+</tr>
+<tr>
+<td><code>linear_value_head_dim</code></td>
+<td>128</td>
+<td>V 头维</td>
+</tr>
+<tr>
+<td><code>linear_conv_kernel_dim</code></td>
+<td>4</td>
+<td>短卷积核大小</td>
+</tr>
+<tr>
+<td><strong>FFN</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>intermediate_size</code></td>
+<td>17408</td>
+<td>SwiGLU <span class="arithmatex">\(d_f\)</span></td>
+</tr>
+<tr>
+<td><code>hidden_act</code></td>
+<td>silu</td>
+<td></td>
+</tr>
+<tr>
+<td><strong>位置</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>rope_parameters.rope_theta</code></td>
+<td>10,000,000</td>
+<td></td>
+</tr>
+<tr>
+<td><code>rope_parameters.mrope_section</code></td>
+<td>[11,11,10]</td>
+<td>3D 位置分段</td>
+</tr>
+<tr>
+<td><code>rope_parameters.partial_rotary_factor</code></td>
+<td>0.25</td>
+<td></td>
+</tr>
+<tr>
+<td><strong>MTP</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>mtp_num_hidden_layers</code></td>
+<td>1</td>
+<td>1 层 MTP（权重在，引擎实现）</td>
+</tr>
+<tr>
+<td><code>max_position_embeddings</code></td>
+<td>262144</td>
+<td>原生长度</td>
+</tr>
+</tbody>
+</table>
+<p><code>[配置值]</code></p>
+<p>关键观察：全注意力的 <code>head_dim=256</code> 但 <code>partial_rotary_factor=0.25</code>，所以只对前 64 维做 RoPE，后 192 维不旋转。这是为长上下文设计——大部分维度保持位置无关，避免 RoPE 在超长长度下数值问题。</p>
+<hr />
+<h2 id="3">3. 数据流总图<a class="headerlink" href="#3" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>input_ids (B,T)
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  │  embed_tokens (248320→5120)
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  ▼
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>┌─────────────────────────────────────────────────────────────────────┐
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│ DecoderLayer ×64，按 layer_types 选择注意力类型:                      │
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>│                                                                     │
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>│  [layer_idx % 4 != 3]  → GatedDeltaNet（线性注意力）                 │
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│  [layer_idx % 4 == 3]  → Qwen3_5Attention（GQA 全注意力）           │
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>│                                                                     │
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│  两种层共同结构:                                                     │
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>│   residual = x                                                      │
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>│   x = input_layernorm(x)                                            │
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>│   x = attention(x)                    ← 线性 or 全注意力             │
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>│   x = residual + x                                                   │
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>│   residual = x                                                      │
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>│   x = post_attention_layernorm(x)                                   │
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>│   x = mlp(x)                            ← SwiGLU 17408（Dense）    │
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>│   x = residual + x                                                   │
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>└─────────────────────────────────────────────────────────────────────┘
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>  │  final RMSNorm
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>  ▼
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>lm_head (5120→248320)
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>  │
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>logits → 采样 / MTP（引擎）
+</code></pre></div>
+<p>线性层和全注意力层的 FFN、Norm、残差完全相同，只有 attention 子层不同。下面分别拆解。</p>
+<hr />
+<h2 id="4">4. 逐块解剖<a class="headerlink" href="#4" title="Permanent link">&para;</a></h2>
+<h3 id="41-qwen3_5attention649">4.1 全注意力层（Qwen3_5Attention，:649）<a class="headerlink" href="#41-qwen3_5attention649" title="Permanent link">&para;</a></h3>
+<p>这是 GQA + QK-norm + 输出门 + partial RoPE 的组合。<code>forward</code>（:676）：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hidden_states</span><span class="p">,</span> <span class="n">position_embeddings</span><span class="p">,</span> <span class="n">attention_mask</span><span class="p">,</span> <span class="n">past_key_values</span><span class="p">):</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="n">query_states</span><span class="p">,</span> <span class="n">gate</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">chunk</span><span class="p">(</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">q_proj</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">B</span><span class="p">,</span><span class="n">S</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">256</span><span class="o">*</span><span class="mi">2</span><span class="p">),</span> <span class="mi">2</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>   <span class="c1"># q 和 gate 各 (B,S,24,256)</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">gate</span> <span class="o">=</span> <span class="n">gate</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">B</span><span class="p">,</span><span class="n">S</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">query_states</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">q_norm</span><span class="p">(</span><span class="n">query_states</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>        <span class="c1"># (B,24,S,256)</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">key_states</span>   <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">k_norm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">k_proj</span><span class="p">(</span><span class="n">x</span><span class="p">))</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">...</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># (B,4,S,256)</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="n">value_states</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">v_proj</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">...</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>         <span class="c1"># (B,4,S,256)</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="n">query_states</span><span class="p">,</span> <span class="n">key_states</span> <span class="o">=</span> <span class="n">apply_rotary_pos_emb</span><span class="p">(</span><span class="n">q</span><span class="p">,</span><span class="n">k</span><span class="p">,</span><span class="n">cos</span><span class="p">,</span><span class="n">sin</span><span class="p">)</span>   <span class="c1"># 只旋转前 partial_rotary 维</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    <span class="k">if</span> <span class="n">past_key_values</span><span class="p">:</span> <span class="n">key</span><span class="p">,</span><span class="n">value</span> <span class="o">=</span> <span class="n">past_key_values</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="n">value</span><span class="p">,</span><span class="n">layer_idx</span><span class="p">)</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    <span class="n">attn_output</span> <span class="o">=</span> <span class="n">attention_interface</span><span class="p">(</span><span class="n">q</span><span class="p">,</span><span class="n">key</span><span class="p">,</span><span class="n">value</span><span class="p">,</span><span class="n">mask</span><span class="p">,</span><span class="n">scaling</span><span class="o">=</span><span class="mi">256</span><span class="o">**-</span><span class="mf">0.5</span><span class="p">)</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    <span class="n">attn_output</span> <span class="o">=</span> <span class="n">attn_output</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span>                <span class="c1"># ★ 输出门</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">o_proj</span><span class="p">(</span><span class="n">attn_output</span><span class="p">)</span>
+</code></pre></div>
+<p>四个细节：</p>
+<p><strong>(a) q_proj 双倍宽，切出 gate</strong>：
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="bp">self</span><span class="o">.</span><span class="n">q_proj</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">5120</span><span class="p">,</span> <span class="mi">24</span><span class="o">*</span><span class="mi">256</span><span class="o">*</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># 输出 12288</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">query_states</span><span class="p">,</span> <span class="n">gate</span> <span class="o">=</span> <span class="n">chunk</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div>
+一次投影同时出 query 和一个 output gate。gate 经 sigmoid 后逐元素乘注意力输出。这叫<strong>输出门控</strong>（output gating），让模型能动态抑制某些头的输出，类似 Mamba/线性注意力的门控机制，是混合架构里让全注意力和线性层行为更一致的设计。</p>
+<p><strong>(b) q_norm/k_norm 是 head-wise RMSNorm</strong>（<code>Qwen3_5RMSNorm(256)</code>，:740），和 MiniMind 同理但 head_dim 更大（256）。</p>
+<p><strong>(c) partial RoPE</strong>：<code>apply_rotary_pos_emb</code>（:575）只旋转前 <code>rotary_dim = 256*0.25 = 64</code> 维，后 192 维（<code>q_pass</code>）原样保留：
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">q_rot</span><span class="p">,</span> <span class="n">q_pass</span> <span class="o">=</span> <span class="n">q</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="n">rotary_dim</span><span class="p">],</span> <span class="n">q</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">rotary_dim</span><span class="p">:]</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">q_embed</span> <span class="o">=</span> <span class="p">(</span><span class="n">q_rot</span><span class="o">*</span><span class="n">cos</span><span class="p">)</span> <span class="o">+</span> <span class="n">rotate_half</span><span class="p">(</span><span class="n">q_rot</span><span class="p">)</span><span class="o">*</span><span class="n">sin</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">return</span> <span class="n">cat</span><span class="p">([</span><span class="n">q_embed</span><span class="p">,</span> <span class="n">q_pass</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div></p>
+<p><strong>(d) KV cache</strong>：每层每 token 存 <span class="arithmatex">\(2\times4\times256\times2\text{B}=4096\text{B}=4\text{KB}\)</span>。16 个全注意力层 → 64KB/token。但线性层的状态是<strong>定长</strong>的（见下），不随 T 增长——这是长上下文的关键。<code>[推导]</code></p>
+<h3 id="42-qwen3_5gateddeltanet374">4.2 线性注意力层（Qwen3_5GatedDeltaNet，:374）—— 本章核心<a class="headerlink" href="#42-qwen3_5gateddeltanet374" title="Permanent link">&para;</a></h3>
+<p>这是 Qwen3.6 最值得吃透的机制。它不是"softmax 注意力的近似"，而是一个<strong>带门控衰减的递归状态机</strong>（gated delta rule），灵感来自 Mamba/Linear Attention。</p>
+<p><strong>投影</strong>（:444）：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">mixed_qkv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_proj_qkv</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">)</span>        <span class="c1"># (B,S, key_dim*2+value_dim)</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_proj_z</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">)</span>                  <span class="c1"># 输出门 (B,S, value_dim)</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_proj_b</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">)</span>                  <span class="c1"># beta: (B,S, num_v_heads)</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_proj_a</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">)</span>                  <span class="c1"># 衰减 logit: (B,S, num_v_heads)</span>
+</code></pre></div>
+<p>维度（配置值）：
+- <code>key_dim = linear_num_key_heads × linear_key_head_dim = 16×128 = 2048</code>
+- <code>value_dim = linear_num_value_heads × linear_value_head_dim = 48×128 = 6144</code>
+- <code>mixed_qkv</code> 维度 = <span class="arithmatex">\(2\times2048 + 6144 = 10240\)</span>
+- <code>conv_dim = 10240</code>（depthwise conv1d，groups=10240）</p>
+<p><strong>短卷积</strong>（local context mixing）：mixed_qkv 经过 kernel=4 的 causal depthwise conv1d + SiLU。这让每个位置看到前 3 个位置的局部模式（类似卷积的局部感受野），再送入全局递归。decode 时用 <code>causal_conv1d_update</code> 增量更新一个 (B, conv_dim, 4) 的 conv_state。</p>
+<p><strong>拆 Q/K/V 并 reshape</strong>：
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">query</span> <span class="o">=</span> <span class="p">(</span><span class="n">B</span><span class="p">,</span><span class="n">S</span><span class="p">,</span><span class="mi">16</span><span class="p">,</span><span class="mi">128</span><span class="p">)</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">key</span>   <span class="o">=</span> <span class="p">(</span><span class="n">B</span><span class="p">,</span><span class="n">S</span><span class="p">,</span><span class="mi">16</span><span class="p">,</span><span class="mi">128</span><span class="p">)</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">value</span> <span class="o">=</span> <span class="p">(</span><span class="n">B</span><span class="p">,</span><span class="n">S</span><span class="p">,</span><span class="mi">48</span><span class="p">,</span><span class="mi">128</span><span class="p">)</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># V 头数(48)是 K 头数(16)的 3 倍，Q/K repeat 到 48</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="n">query</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">repeat_interleave</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>   <span class="c1"># (B,S,48,128)</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="n">key</span>   <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">repeat_interleave</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>     <span class="c1"># (B,S,48,128)</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="n">beta</span>  <span class="o">=</span> <span class="n">b</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">()</span>                          <span class="c1"># (B,S,48)</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="n">g</span>     <span class="o">=</span> <span class="o">-</span><span class="n">exp</span><span class="p">(</span><span class="n">A_log</span><span class="p">)</span> <span class="o">*</span> <span class="n">softplus</span><span class="p">(</span><span class="n">a</span> <span class="o">+</span> <span class="n">dt_bias</span><span class="p">)</span>  <span class="c1"># (B,S,48) 衰减因子（负的）</span>
+</code></pre></div></p>
+<p><strong>核心：gated delta rule 递归</strong>。chunk 模式（训练/prefill）调 <code>chunk_gated_delta_rule</code>，recurrent 模式（decode 单 token）调 <code>fused_recurrent_gated_delta_rule</code>（来自 <code>fla-core</code> 库）。数学上，每个头维护一个状态矩阵 <span class="arithmatex">\(S_t\in\mathbb{R}^{d_k\times d_v}\)</span>（这里 128×128），按以下规则更新：</p>
+<div class="arithmatex">\[S_t = \alpha_t S_{t-1} + \beta_t (k_t\otimes v_t - k_t(k_t^\top S_{t-1}))\]</div>
+<div class="arithmatex">\[o_t = S_t^\top q_t\]</div>
+<p>逐符号解释：
+- <span class="arithmatex">\(q_t,k_t\in\mathbb{R}^{d_k=128}\)</span>，<span class="arithmatex">\(v_t\in\mathbb{R}^{d_v=128}\)</span>（per head）。
+- <span class="arithmatex">\(\alpha_t = \exp(g_t)\in(0,1)\)</span>：<strong>数据相关的衰减率</strong>。<span class="arithmatex">\(g_t = -e^{A_{\log}}\cdot\text{softplus}(a_t + b_{dt})\)</span>，其中 <span class="arithmatex">\(A_{\log}\)</span> 是每头可学习参数（初始化 log(uniform(1,16))），<span class="arithmatex">\(a_t\)</span> 是输入投影出的衰减 logit。<span class="arithmatex">\(g_t&lt;0\)</span>，所以 <span class="arithmatex">\(\alpha_t&lt;1\)</span>，旧状态被指数遗忘。这比 Mamba 的标量衰减更强——每个时间步、每个头有独立衰减率。
+- <span class="arithmatex">\(\beta_t=\sigma(b_t)\in(0,1)\)</span>：<strong>更新门</strong>（beta），控制新信息写入强度。
+- <span class="arithmatex">\(k_t\otimes v_t\)</span> 是 outer product（<span class="arithmatex">\(d_k\times d_v\)</span>）。
+- <span class="arithmatex">\(k_t(k_t^\top S_{t-1})\)</span> 是 <strong>delta rule 的"擦除"项</strong>：先从旧状态里读出 <span class="arithmatex">\(k_t\)</span> 对应的值 <span class="arithmatex">\(k_t^\top S_{t-1}\)</span>，用新 <span class="arithmatex">\(v_t\)</span> 减去它，再写回。这让状态能"覆盖"旧记忆而非只累加，是 delta rule 相对线性注意力（只做累加）的关键优势——可以精确更新键值关联。
+- <span class="arithmatex">\(o_t=S_t^\top q_t\)</span>：用 query 从状态矩阵检索。</p>
+<p><strong>状态 shape 与缓存</strong>：
+- 训练 chunk 模式：分块计算，状态在块间传递，复杂度 <span class="arithmatex">\(O(T\cdot d_k d_v)\)</span> 而非 <span class="arithmatex">\(O(T^2 d)\)</span>。
+- decode 模式：<code>recurrent_state</code> shape <code>(B, 48, 128, 128)</code>，每层一个，<strong>固定大小，不随序列增长</strong>。
+- conv_state shape <code>(B, 3, 12288)</code>（q/k/v 三份的短卷积窗）。
+- 对比全注意力 KV cache 随 <span class="arithmatex">\(T\)</span> 线性增长：GatedDeltaNet 的"记忆"是压缩在 128×128 矩阵里的，无论 1K 还是 1M token，每层状态都是 <span class="arithmatex">\(48\times128\times128\times2\text{B}\approx1.5\text{MB}\)</span>。<code>[源码事实][推导]</code></p>
+<p><strong>输出门 + 归一化</strong>（:540）：
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">if</span> <span class="n">use_full_rank_gate</span><span class="p">:</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>    <span class="n">g</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">g_proj</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">)</span>       <span class="c1"># (B,S,6144)</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">g</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">g_b_proj</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">g_a_proj</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">))</span>   <span class="c1"># 低秩门</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="n">g</span> <span class="o">=</span> <span class="n">rearrange</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="s1">&#39;... (h d) -&gt; ... h d&#39;</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="mi">128</span><span class="p">)</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="n">o</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">g</span><span class="p">)</span>                     <span class="c1"># FusedRMSNormGated: norm(o) * sigmoid(g)</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="n">o</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">o_proj</span><span class="p">(</span><span class="n">o</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>           <span class="c1"># 6144→5120</span>
+</code></pre></div>
+<code>FusedRMSNormGated</code> 把 RMSNorm 和 SiLU/Sigmoid 门控融合：<span class="arithmatex">\(\text{out}=\text{RMSNorm}(o)\odot\sigma(g)\)</span>。这是输出门控的归一化版本，稳定数值。</p>
+<p><strong>(e) q/k L2 归一化在 kernel 内</strong>：调用时传 <code>use_qk_l2norm_in_kernel=True</code>，在 fla kernel 内部对 q/k 做 L2 归一化（类似 QK-norm），稳定递归状态的数值。</p>
+<h3 id="43-ffndense-swiglu">4.3 FFN（Dense SwiGLU）<a class="headerlink" href="#43-ffndense-swiglu" title="Permanent link">&para;</a></h3>
+<p>所有 64 层都是 dense SwiGLU（<code>Qwen3_5MLP</code>，:724），<span class="arithmatex">\(d_f=17408\)</span>：
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">down_proj</span><span class="p">(</span><span class="n">silu</span><span class="p">(</span><span class="n">gate_proj</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="o">*</span> <span class="n">up_proj</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+</code></pre></div>
+没有 MoE——27B 全是激活参数。这是和 GLM/Kimi/DSV4 最根本的架构差异：Qwen3.6 用混合注意力而非 MoE 来扩展。</p>
+<h3 id="44-mrope3d">4.4 mrope（3D 旋转位置编码）<a class="headerlink" href="#44-mrope3d" title="Permanent link">&para;</a></h3>
+<p>Qwen3.6 是多模态模型，文本和视觉 token 共享位置编码。视觉 token 有时间(T)、高(H)、宽(W)三个空间维度，所以 RoPE 的频率维被分成三段：<code>mrope_section=[11,11,10]</code>（共 32 个频率，分成 11/11/10 三组），分别施加 T/H/W 三个位置索引。纯文本时 T=H=W=同一个位置，退化回普通 RoPE。</p>
+<p>这对文本理解影响不大，但解释了为什么 <code>rope_theta=1e7</code>（大词表 + 长视觉序列）和 <code>partial_rotary_factor=0.25</code>。视觉部分有独立的 Conv3d patch embed + 27 层 ViT，本章不展开（可看源码 :846 起的 vision 模块）。</p>
+<hr />
+<h2 id="5">5. 关键创新深挖<a class="headerlink" href="#5" title="Permanent link">&para;</a></h2>
+<h3 id="51-3-1">5.1 为什么"3 线性 + 1 全注意力"？<a class="headerlink" href="#51-3-1" title="Permanent link">&para;</a></h3>
+<p>线性注意力（delta rule）的优势是 <span class="arithmatex">\(O(T)\)</span>、定长状态、无限上下文；劣势是<strong>检索精度</strong>——把所有历史压缩进一个 128×128 矩阵，必然有信息损失，精确"找回第 327 个 token 是什么"这种任务不如全注意力。</p>
+<p>全注意力的优势是精确（每个 query 直接和所有 key 算相似度），劣势是 <span class="arithmatex">\(O(T^2)\)</span> 和 KV cache 增长。</p>
+<p>混合策略：
+- 48 个线性层负责<strong>长程记忆和信息流</strong>（压缩、递推、遗忘），状态恒定。
+- 16 个全注意力层（每 4 层一个）负责<strong>精确检索</strong>，直接查原始 KV。
+- 全注意力层间隔 4，保证每 4 层至少有一次精确 attention 把信息"对齐"。</p>
+<p>这是一种计算-精度的权衡：线性层让长上下文可行，稀疏的全注意力层保证质量不崩。对比 GLM/DSV4 用"稀疏注意力（DSA/压缩）"在每一层做近似检索，Qwen 选择"大部分层线性 + 少部分层精确"。两条路线，目标相同。</p>
+<h3 id="52-gated-deltanet-vs-mamba-vs">5.2 Gated DeltaNet vs Mamba vs 线性注意力<a class="headerlink" href="#52-gated-deltanet-vs-mamba-vs" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>线性注意力</th>
+<th>Mamba (S6)</th>
+<th>GatedDeltaNet</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>状态更新</td>
+<td><span class="arithmatex">\(S_t=S_{t-1}+\phi(k_t)v_t^\top\)</span></td>
+<td><span class="arithmatex">\(S_t=A S_{t-1}+B x_t C\)</span></td>
+<td><span class="arithmatex">\(S_t=\alpha S_{t-1}+\beta(k v^\top - k(k^\top S))\)</span></td>
+</tr>
+<tr>
+<td>衰减</td>
+<td>无（累加）</td>
+<td>固定 <span class="arithmatex">\(\Delta A\)</span></td>
+<td>数据相关 <span class="arithmatex">\(\alpha_t,\beta_t\)</span></td>
+</tr>
+<tr>
+<td>能擦除旧记忆</td>
+<td>不能（只累加）</td>
+<td>部分（衰减）</td>
+<td>能（delta 项覆盖）</td>
+</tr>
+<tr>
+<td>局部混合</td>
+<td>无</td>
+<td>无</td>
+<td>有（conv1d kernel=4）</td>
+</tr>
+<tr>
+<td>输出门</td>
+<td>无</td>
+<td>有</td>
+<td>有（RMSNormGated）</td>
+</tr>
+</tbody>
+</table>
+<p>DeltaNet 的 delta 更新规则 <span class="arithmatex">\(v_t - k_t^\top S_{t-1}\)</span> 是关键：它像一个关联记忆的"写操作"——先读后写，新值覆盖旧值，而不是无脑累加。这使得它在需要精确键值映射的任务上显著优于纯线性注意力。<code>[源码事实]</code>（数学来自 fla-core chunk_gated_delta_rule 语义）</p>
+<h3 id="53-mtp">5.3 MTP 的状态<a class="headerlink" href="#53-mtp" title="Permanent link">&para;</a></h3>
+<p>config <code>mtp_num_hidden_layers=1</code>，权重以 <code>^mtp\.</code> 前缀存在 checkpoint 里，但 <code>Qwen3_5ForCausalLM</code> 的主 forward 不加载/调用它们（transformers 把它们列入 <code>_keys_to_ignore_on_load_unexpected</code> 或类似机制）。<code>[源码事实]</code> 实际推理由 vLLM 的 <code>qwen3_next_mtp</code> 或 SGLang 的 NEXTN 实现。这和 GLM/DSV4 的 MTP 状态一致：权重开源、参考建模不跑、依赖引擎。</p>
+<hr />
+<h2 id="6">6. 参数量与账本<a class="headerlink" href="#6" title="Permanent link">&para;</a></h2>
+<h3 id="61">6.1 总参数（推导）<a class="headerlink" href="#61" title="Permanent link">&para;</a></h3>
+<p><strong>Embedding</strong>：<span class="arithmatex">\(Vd = 248320\times5120 \approx 1.27\text{B}\)</span>（词表大，占比可观）。</p>
+<p><strong>全注意力层</strong>（16 层），每层：
+- q_proj: <span class="arithmatex">\(5120\times12288 = 62.9\text{M}\)</span>
+- k_proj: <span class="arithmatex">\(5120\times1024 = 5.24\text{M}\)</span>
+- v_proj: <span class="arithmatex">\(5120\times1024 = 5.24\text{M}\)</span>
+- o_proj: <span class="arithmatex">\(24\times256\times5120 = 31.5\text{M}\)</span>
+- q/k norm: ~50K
+- 小计 ≈105M/层 ×16 ≈1.68B</p>
+<p><strong>线性注意力层</strong>（48 层），每层：
+- in_proj_qkv: <span class="arithmatex">\(5120\times10240 = 52.4\text{M}\)</span>
+- in_proj_z: <span class="arithmatex">\(5120\times6144 = 31.5\text{M}\)</span>
+- in_proj_b/a: <span class="arithmatex">\(5120\times48\)</span> each ≈0.5M
+- g_a/g_b (低秩门): ~<span class="arithmatex">\(5120\times128 + 128\times6144\approx1.4\text{M}\)</span>
+- conv1d: 10240×4 ≈41K
+- o_proj: <span class="arithmatex">\(6144\times5120 = 31.5\text{M}\)</span>
+- A_log/dt_bias/norm: 小
+- 小计 ≈118M/层 ×48 ≈5.66B</p>
+<p><strong>FFN</strong>（64 层，每层 <span class="arithmatex">\(3\times5120\times17408=267.4\text{M}\)</span>）：64×267.4M ≈17.1B。</p>
+<p><strong>Norm + 其他</strong>：~1M。</p>
+<p><strong>总计 ≈ 1.27 + 1.68 + 5.66 + 17.1 ≈ 25.7B</strong>，加 lm_head（解绑，另 1.27B）→ <strong>≈27B</strong>，与官方 27B 一致。<code>[推导]</code>（FFN 占 63%，是最大头，符合 dense 模型特征）</p>
+<h3 id="62">6.2 激活参数<a class="headerlink" href="#62" title="Permanent link">&para;</a></h3>
+<p>Dense 模型：每 token 激活全部参数，<strong>27B 激活 = 27B 总参</strong>。这和 MoE 模型（总参几百 B、激活几十 B）形成鲜明对比。</p>
+<h3 id="63-kv-cache">6.3 KV cache 与状态<a class="headerlink" href="#63-kv-cache" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>层类型</th>
+<th>每 token 缓存</th>
+<th>随 T 增长？</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>全注意力（16 层）</td>
+<td>4 KB/层 ×16 = 64 KB</td>
+<td>是（线性增长）</td>
+</tr>
+<tr>
+<td>线性注意力（48 层）</td>
+<td>recurrent_state ≈ 1.5 MB/层 + conv 50KB，<strong>固定</strong></td>
+<td><strong>否</strong></td>
+</tr>
+</tbody>
+</table>
+<p>长上下文成本主要来自 16 个全注意力层。262K 上下文：<span class="arithmatex">\(64\text{KB}\times262\text{K}\approx16.8\text{GB}\)</span>（bf16）。线性层状态固定 ≈48×1.5MB=72MB。1M 上下文：全注意力部分约 64GB——这就是为什么 Qwen 要靠引擎的 paged KV + 可能的量化来跑 1M，而非架构天然支持（对比 MLA 模型 1M 只要 ~100–200MB/层级别）。<code>[推导]</code></p>
+<hr />
+<h2 id="7-vs">7. 训练 vs 推理<a class="headerlink" href="#7-vs" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>训练代码未发布</strong>。transformers 内建的是参考/推理建模。</li>
+<li><strong>GatedDeltaNet 依赖 fla-core</strong>（<code>flash-linear-attention</code>）和 <code>causal-conv1d</code> 两个外部库提供 fused kernel。没有它们会 fallback 到 torch 实现（慢但能跑），代码会 warning。</li>
+<li><strong>两种前向模式</strong>：训练/prefill 用 <code>chunk_gated_delta_rule</code>（分块并行），decode 用 <code>fused_recurrent_gated_delta_rule</code>（单步递归），代码按 <code>use_cache and q_len==1</code> 自动切换。</li>
+<li><strong>MTP</strong>：权重存在（<code>mtp.*</code>），transformers 主模型忽略，vLLM/SGLang 实现。</li>
+<li><strong>视觉</strong>：原生多模态，Conv3d 时空 patch + 27 层 ViT + PatchMerger 到 5120 维，用 placeholder token 替换插入文本序列，mrope 携带 3D 位置。</li>
+</ul>
+<hr />
+<h2 id="8">8. 检查题<a class="headerlink" href="#8" title="Permanent link">&para;</a></h2>
+<ol>
+<li>
+<p><strong>GatedDeltaNet 的状态矩阵 <span class="arithmatex">\(S_t\)</span> 是 <span class="arithmatex">\((d_k,d_v)=(128,128)\)</span>。如果序列长度从 1K 变 1M，<span class="arithmatex">\(S_t\)</span> 的 shape 怎么变？这和全注意力的 KV cache 有何本质区别？</strong>
+ <br />
+<details><summary>答案</summary>不变，始终 (B,48,128,128)。全注意力 KV cache 是 (B,h_kv,T,d_h)，随 T 线性增长；delta net 把所有历史压缩进固定大小的关联矩阵，旧信息通过衰减和 delta 擦除被"遗忘/覆盖"。这是线性注意力支持无限上下文的根本，但代价是信息有损压缩。</details>
+</p>
+</li>
+<li>
+<p><strong>delta rule 更新式里 <span class="arithmatex">\(-k_t(k_t^\top S_{t-1})\)</span> 这一项是干什么的？去掉它（退化成纯线性注意力累加）会怎样？</strong>
+ <br />
+<details><summary>答案</summary>这是"读后写"的擦除项：先从旧状态读出键 $k_t$ 当前关联的值 $k_t^\top S$，再用新 $v_t$ 减去它，实现覆盖更新。去掉后变成 $S_t=\alpha S_{t-1}+\beta k_t v_t^\top$，只能累加不能覆盖，旧关联永远残留（靠衰减慢慢遗忘），无法精确更新键值映射，检索精度下降。</details>
+</p>
+</li>
+<li>
+<p><strong>Qwen3.6 全注意力层 q_proj 输出维度是 <code>24*256*2</code>（双倍），第二半做什么用？为什么要这么设计？</strong>
+ <br />
+<details><summary>答案</summary>第二半是 output gate，经 sigmoid 后逐元素乘注意力输出。它让模型能动态缩放/抑制每个位置的注意力输出，是门控机制；和线性层的 RMSNormGated 输出门呼应，让两类层的输出分布更一致，训练更稳。一次投影出 q+gate 省一次 kernel launch。</details>
+</p>
+</li>
+<li>
+<p><strong>为什么是"3 线性 + 1 全注意力"而不是"63 线性 + 1 全注意力"或全部全注意力？</strong>
+ <br />
+<details><summary>答案</summary>全注意力层太少（如 63:1），精确检索能力不足，长程精确依赖会丢；太多则失去线性注意力 $O(T)$ 的长上下文优势，KV cache 爆炸。3:1 是质量-效率折中：每 4 层一次精确对齐，其余 3 层用线性状态做长程压缩，既控成本又保质量。这个间隔是消融出来的超参。</details>
+</p>
+</li>
+<li>
+<p><strong>Qwen3.6 的参数量 27B 全是激活参数（dense），而 GLM-5.2 总参 ~740B 但激活 ~35B。两者推理时每 token 的计算量(FLOPs)谁大？为什么总参差异巨大但推理成本可能相近？</strong>
+ <br />
+<details><summary>答案</summary>推理计算量取决于激活参数（实际过的权重）。Qwen 27B 全激活 ≈27B；GLM 每 token 只激活 ~35B（3 dense 层 + 8/256 专家 + MLA）。两者每 token FLOPs 同量级（GLM 略高），但 GLM 总参 740B 需要更大显存/多卡存权重。MoE 用总参换知识容量、不增激活算力；dense 则全量计算。</details>
+</p>
+</li>
+</ol>
+<hr />
+<h2 id="_1">下一步<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<p>04 章看到了"混合注意力"路线。05 章 GLM-5.2 走另一条路：<strong>每一层都做注意力，但用 MLA 压缩 KV + DSA 稀疏化检索的 token 数（top-2048）+ IndexShare 跨层共享稀疏索引</strong>，再叠加 256 专家 MoE。同样是长上下文 + 大规模，手段完全不同。</p>
+<p>→ <a href="../05_GLM-5.2/">05 · GLM-5.2</a></p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  回到页面顶部
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/freedom-lwx/llm-architecture-handbook" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "navigation.indexes", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.action.edit", "content.action.view"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../javascripts/mathjax.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>
